@@ -8,7 +8,7 @@ export default function Sidebar() {
       3. overflow-hidden: 確保收起時，文字不會超出邊界爆掉
       4. transition-all duration-300: 展開/收起時的滑順動畫
     */
-    <nav className="group w-20 hover:w-56 border-r border-[#1A1A24] bg-[#0B0B0F] py-6 px-3 flex flex-col gap-2 shrink-0 transition-all duration-300 ease-in-out overflow-hidden z-20">
+    <nav className="relative z-10 group w-20 hover:w-56 border-r border-[#1A1A24] bg-[#0B0B0F] py-6 px-3 flex flex-col gap-2 shrink-0 transition-all duration-300 ease-in-out overflow-hidden">
       
       <button className="flex items-center p-3 rounded-xl bg-[#8B5CF6]/10 text-[#8B5CF6] transition-colors w-full relative">
         <div className="w-8 flex justify-center items-center shrink-0">

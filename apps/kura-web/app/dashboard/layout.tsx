@@ -1,5 +1,5 @@
 import React from 'react';
-import Sidebar from './components/Sidebar';
+import Sidebar from './_components/Sidebar';
 
 export default function DashboardLayout({
   children,
@@ -12,7 +12,7 @@ export default function DashboardLayout({
       <Sidebar />
       
       {/* 這裡的 children 會渲染 dashboard/page.tsx 的內容 */}
-      <main className="flex-1 overflow-y-auto p-10 bg-gradient-to-br from-[#0B0B0F] to-[#1A1A24]/30">
+      <main className="relative z-30 flex-1 overflow-y-auto p-10 bg-gradient-to-br from-[#0B0B0F] to-[#1A1A24]/30">
         {children}
       </main>
     </div>
