@@ -1,0 +1,48 @@
+# Node - except we need node_modules for Docker
+npm-debug.log
+yarn-error.log
+pnpm-lock.yaml
+
+# Version control
+.git
+.gitignore
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build artifacts (except we'll rebuild in Docker)
+dist/
+build/
+.swc/
+
+# Documentation
+README.md
+*.md
+
+# Tests
+__tests__/
+.test.js
+.spec.js
+coverage/
+jest.config.js
+
+# Other
+.firebase
+firebase-debug.log
+firebase.json
+.eslintignore
+eslint.config.mjs
+postcss.config.mjs
+tailwind.config.ts
+certificates/

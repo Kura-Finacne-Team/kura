@@ -29,8 +29,6 @@ const nextConfig: NextConfig = {
   /**
    * Rewrites for API routes
    * Forwards /api/* requests to backend server
-   * - Dev: http://localhost:8080 (from .env.local)
-   * - Prod: Firebase Cloud Functions (from firebase.json)
    */
   async rewrites() {
     return {
@@ -46,7 +44,7 @@ const nextConfig: NextConfig = {
   async headers() {
     // 生成动态的 CSP 头，包括后端 API 和应用自身的域名
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://kura-backend-642134687769.us-central1.run.app';
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://localhost:3000';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kura-web-642134687769.us-central1.run.app';
     
     // 从 URL 提取基础域名
     const getOrigin = (url: string) => {

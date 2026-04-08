@@ -1,6 +1,0 @@
-# Firebase local files (if using local emulator)
-.firebase/
-
-# Ignore .env.local - DO NOT COMMIT
-.env.local
-

@@ -1,11 +1,7 @@
 # Build artifacts
-.next
-dist
-build
 .swc
 
-# Node
-node_modules
+# Node (but we need node_modules and .next for runtime)
 npm-debug.log
 yarn-error.log
 
