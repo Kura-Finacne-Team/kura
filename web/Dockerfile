@@ -2,14 +2,19 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first
 COPY package*.json ./
+COPY tsconfig.json ./
+COPY next.config.ts ./
+COPY eslint.config.mjs ./
+COPY postcss.config.mjs ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy source code
-COPY . .
+COPY app ./app
+COPY public ./public
 
 # Build Next.js app
 RUN npm run build
@@ -27,6 +32,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/next.config.ts ./
 
 # Set environment variables
 ENV NODE_ENV=production
