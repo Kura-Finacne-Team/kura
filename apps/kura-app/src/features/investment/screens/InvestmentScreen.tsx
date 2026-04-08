@@ -29,7 +29,7 @@ export default function InvestmentScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#0B0B0F' }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
-        <PerformanceSummary timeRange={selectedTimeRange as any} />
+        <PerformanceSummary timeRange={selectedTimeRange} />
         <WaveChart selectedTimeRange={selectedTimeRange} onTimeRangeChange={setSelectedTimeRange} />
         <AccountCapsules 
           accounts={investmentAccounts} 

@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import { useFinanceStore, AssetSnapshot } from '../../../shared/store/useFinanceStore';
 
 interface PerformanceSummaryProps {
-  timeRange?: '24h' | '7d' | '30d' | '90d' | '1y' | 'all';
+  timeRange?: '1M' | '3M' | '6M' | '1Y' | 'All';
 }
 
 function formatCurrency(value: number) {
@@ -33,24 +33,21 @@ function calculatePerformanceMetrics(
   const currentTotal = calculateTotalAssets();
   
   // 根据时间范围确定天数
-  let daysInRange = 7;
+  let daysInRange = 30;
   switch (timeRange) {
-    case '24h':
-      daysInRange = 1;
-      break;
-    case '7d':
-      daysInRange = 7;
-      break;
-    case '30d':
+    case '1M':
       daysInRange = 30;
       break;
-    case '90d':
+    case '3M':
       daysInRange = 90;
       break;
-    case '1y':
+    case '6M':
+      daysInRange = 180;
+      break;
+    case '1Y':
       daysInRange = 365;
       break;
-    case 'all':
+    case 'All':
       daysInRange = 10000; // 覆盖所有数据
       break;
   }
@@ -80,7 +77,7 @@ function calculatePerformanceMetrics(
 }
 
 export default function PerformanceSummary({ 
-  timeRange = '30d',
+  timeRange = '1M',
 }: PerformanceSummaryProps) {
   const assetHistory = useFinanceStore((s) => s.assetHistory);
   const calculateTotalAssets = useFinanceStore((s) => s.calculateTotalAssets);

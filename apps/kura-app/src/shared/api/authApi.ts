@@ -10,9 +10,8 @@ import Logger from '../utils/Logger';
 // In-memory fallback for when AsyncStorage is unavailable
 let memoryStorage: Record<string, string> = {};
 
-// Default backend URL - supports both http and https
-// For self-signed certificates in development, consider using http://localhost:8080
-const DEFAULT_BACKEND_URL = 'https://localhost:8080';
+// Default backend URL - production environment
+const DEFAULT_BACKEND_URL = 'https://kura-backend-642134687769.us-central1.run.app';
 const AUTH_TOKEN_KEY = 'kura.auth.token';
 const IS_DEV = __DEV__;
 
