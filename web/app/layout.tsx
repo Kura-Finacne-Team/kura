@@ -18,10 +18,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Allow Plaid CDN in CSP */}
+        <meta
+          httpEquiv="Content-Security-Policy"
+          content="frame-src https://cdn.plaid.com https://*.plaid.com; connect-src https://cdn.plaid.com https://*.plaid.com"
+        />
         {/* Load Plaid Link script once globally to prevent duplication */}
         <Script
           src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
         />
       </head>
       <body className="h-screen bg-[#0B0B0F] text-white flex flex-col overflow-hidden antialiased selection:bg-[#8B5CF6]/30">

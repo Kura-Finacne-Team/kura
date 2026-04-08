@@ -52,6 +52,11 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: 'fullscreen=*',
           },
+          // Content-Security-Policy to allow Plaid iframes
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-src https://cdn.plaid.com https://*.plaid.com; connect-src https://cdn.plaid.com https://*.plaid.com",
+          },
         ],
       },
     ];
