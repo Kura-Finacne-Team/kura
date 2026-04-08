@@ -44,6 +44,37 @@ const nextConfig: NextConfig = {
   },
   
   async headers() {
+    // 生成动态的 CSP 头，包括后端 API 和应用自身的域名
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://kura-backend-642134687769.us-central1.run.app';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://localhost:3000';
+    
+    // 从 URL 提取基础域名
+    const getOrigin = (url: string) => {
+      try {
+        const u = new URL(url);
+        return `${u.protocol}//${u.host}`;
+      } catch {
+        return url;
+      }
+    };
+    
+    const backendOrigin = getOrigin(backendUrl);
+    const appOrigin = getOrigin(appUrl);
+    
+    // 构建 CSP connect-src 指令
+    const connectSources = [
+      "'self'",
+      backendOrigin,
+      appOrigin,
+      'https://cdn.plaid.com',
+      'https://*.plaid.com',
+      'https://*.coingecko.com', // CoinGecko API for crypto prices
+      'https://api.coingecko.com',
+      'wss://relay.walletconnect.org', // WalletConnect relay (WebSocket)
+      'wss://*.walletconnect.org', // WalletConnect relay endpoints
+      'https://api.web3modal.org', // Web3Modal API
+    ].join(' ');
+    
     return [
       {
         source: '/(.*)',
@@ -52,10 +83,10 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: 'fullscreen=*',
           },
-          // Content-Security-Policy to allow Plaid iframes
+          // Content-Security-Policy to allow Plaid, Web3Modal, WalletConnect
           {
             key: 'Content-Security-Policy',
-            value: "frame-src https://cdn.plaid.com https://*.plaid.com; connect-src https://cdn.plaid.com https://*.plaid.com",
+            value: `script-src 'self' 'unsafe-inline' https://cdn.plaid.com https://*.plaid.com https://*.web3modal.org https://api.web3modal.org; style-src 'self' 'unsafe-inline' https://cdn.plaid.com https://*.plaid.com; frame-src 'self' https://cdn.plaid.com https://*.plaid.com; connect-src ${connectSources}`,
           },
         ],
       },
