@@ -1,5 +1,5 @@
 {
-  "name": "kura-app",
+  "name": "kura",
   "version": "0.0.1-a",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {

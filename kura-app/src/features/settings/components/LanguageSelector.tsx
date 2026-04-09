@@ -11,7 +11,7 @@ interface LanguageSelectorProps {
 
 const SUPPORTED_LANGUAGES: { code: Language; name: string; nativeName: string }[] = [
   { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'zh', name: 'Chinese', nativeName: '中文' },
+  { code: 'zh-TW', name: 'Traditional Chinese (Taiwan)', nativeName: '繁體中文 (台灣)' },
 ];
 
 export default function LanguageSelector({ selectedLanguage, onSelectLanguage }: LanguageSelectorProps) {

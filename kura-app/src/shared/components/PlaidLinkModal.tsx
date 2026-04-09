@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Modal, View, ActivityIndicator, Text, TouchableOpacity, Keyboard } from 'react-native';
+import { Modal, View, ActivityIndicator, Text, TouchableOpacity, Keyboard, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { create, open, destroy } from 'react-native-plaid-link-sdk';
 import { useAppStore } from '../store/useAppStore';
 import Logger from '../utils/Logger';
+import Constants from 'expo-constants';
 
 interface PlaidLinkModalProps {
   isVisible: boolean;
@@ -29,6 +30,24 @@ export default function PlaidLinkModal({
   const hasExitedRef = useRef(false);
   const tokenRequestAttemptRef = useRef(false);
 
+  // Detect if running on simulator
+  const isSimulator = Constants.expoConfig?.plugins?.some((p: any) => 
+    typeof p === 'object' && p[0] === 'expo-build-properties'
+  );
+  const isIOSSimulator = Platform.OS === 'ios' && !Platform.isPad && 
+    (__DEV__ || isSimulator);
+
+  // Log environment info for debugging
+  useEffect(() => {
+    if (isVisible) {
+      Logger.info('PlaidLinkModal', 'Environment info', {
+        platform: Platform.OS,
+        isSimulator: isIOSSimulator,
+        devMode: __DEV__,
+      });
+    }
+  }, [isVisible, isIOSSimulator]);
+
   const confirmPlaidExchange = useAppStore((state: any) => state.confirmPlaidExchange);
   const requestPlaidLinkToken = useAppStore((state: any) => state.requestPlaidLinkToken);
   const plaidLinkTokenTimestamp = useAppStore((state: any) => state.plaidLinkTokenTimestamp);
@@ -46,6 +65,9 @@ export default function PlaidLinkModal({
   const handleRetry = async () => {
     setError(null);
     setIsLoading(false);
+    // Reset flags to allow re-initialization
+    hasExitedRef.current = false;
+    tokenRequestAttemptRef.current = false;
     try {
       await requestPlaidLinkToken();
     } catch (err) {
@@ -84,34 +106,64 @@ export default function PlaidLinkModal({
 
     let isMounted = true;
     let sessionCreated = false;
+    let crashGuardTimer: NodeJS.Timeout | null = null;
+    let initAborted = false;
 
     const initializePlaid = async () => {
       try {
+        if (initAborted) return;
+        
         setIsInitializing(true);
         setIsLoading(true);
         setError(null);
 
-        if (!isMounted) return;
+        if (!isMounted) {
+          initAborted = true;
+          return;
+        }
 
         Logger.debug('PlaidLinkModal', 'Creating Plaid session', {
           token: linkToken.substring(0, 20) + '...',
           tokenExpired: isTokenExpired(),
+          isSimulator: isIOSSimulator,
         });
+
+        // Crash guard: If no response after 30s on init, something broke
+        crashGuardTimer = setTimeout(() => {
+          if (isMounted && sessionCreated && !hasExitedRef.current && !initAborted) {
+            Logger.warn('PlaidLinkModal', 'No UI response after 30s, Plaid may be frozen or crashed');
+            initAborted = true;
+            if (isMounted) {
+              setError('Plaid UI is not responding. Please try again.');
+              setIsLoading(false);
+              setIsInitializing(false);
+            }
+          }
+        }, 30000);
 
         // Create session
         try {
           create({ token: linkToken });
+          if (initAborted || !isMounted) {
+            throw new Error('Initialization was aborted');
+          }
           sessionCreated = true;
           sessionRef.current = true;
           Logger.info('PlaidLinkModal', 'Plaid session created');
         } catch (err: any) {
+          if (crashGuardTimer) clearTimeout(crashGuardTimer);
+          initAborted = true;
           Logger.error('PlaidLinkModal', 'Session creation failed', {
             error: err instanceof Error ? err.message : String(err),
+            isSimulator: isIOSSimulator,
           });
           throw err;
         }
 
-        if (!isMounted || !sessionCreated) return;
+        if (!isMounted || !sessionCreated || initAborted) {
+          if (crashGuardTimer) clearTimeout(crashGuardTimer);
+          return;
+        }
 
         Logger.debug('PlaidLinkModal', 'Opening Plaid UI');
 
@@ -126,6 +178,7 @@ export default function PlaidLinkModal({
                 institution: linkSuccess?.metadata?.institution?.name,
               });
 
+              if (crashGuardTimer) clearTimeout(crashGuardTimer);
               if (exitTimeoutRef.current) clearTimeout(exitTimeoutRef.current);
 
               try {
@@ -137,6 +190,15 @@ export default function PlaidLinkModal({
                   );
                   if (isMounted) {
                     Logger.info('PlaidLinkModal', 'Exchange and data load complete');
+                    // Destroy session after successful completion
+                    if (sessionRef.current) {
+                      try {
+                        destroy();
+                        sessionRef.current = false;
+                      } catch (err) {
+                        Logger.warn('PlaidLinkModal', 'Error destroying session', { error: String(err) });
+                      }
+                    }
                     onSuccess?.();
                     setIsLoading(false);
                     onClose();
@@ -162,6 +224,7 @@ export default function PlaidLinkModal({
                 errorCode: linkExit?.error?.errorCode,
               });
 
+              if (crashGuardTimer) clearTimeout(crashGuardTimer);
               if (exitTimeoutRef.current) clearTimeout(exitTimeoutRef.current);
 
               // iOS workaround: hasError=true but errorCode is empty means user cancelled
@@ -177,7 +240,15 @@ export default function PlaidLinkModal({
                   setIsLoading(false);
                 }
               } else {
-                // User cancelled or iOS empty error - close immediately
+                // User cancelled - destroy session and close
+                if (sessionRef.current) {
+                  try {
+                    destroy();
+                    sessionRef.current = false;
+                  } catch (err) {
+                    Logger.warn('PlaidLinkModal', 'Error destroying session on exit', { error: String(err) });
+                  }
+                }
                 if (isMounted) {
                   setIsLoading(false);
                   setError(null);
@@ -191,16 +262,18 @@ export default function PlaidLinkModal({
 
           Logger.debug('PlaidLinkModal', 'Plaid UI opened');
 
-          // Safety timeout for iOS
+          // Safety timeout for iOS - increased to 5 minutes (300s) for Plaid operations
+          // Plaid flow can involve multiple steps (selecting bank, entering credentials, etc.)
           exitTimeoutRef.current = setTimeout(() => {
             if (!isMounted || hasExitedRef.current) return;
-            Logger.warn('PlaidLinkModal', 'No response after 60s, forcing close');
+            Logger.warn('PlaidLinkModal', 'No response after 5 minutes, forcing close');
             hasExitedRef.current = true;
             if (isMounted) {
               setIsLoading(false);
-              onClose();
+              setError('Connection timeout. Please try again.');
+              // Don't close immediately - let user retry
             }
-          }, 60000) as any;
+          }, 5 * 60 * 1000) as any; // 5 minutes
 
         } catch (openErr: any) {
           Logger.error('PlaidLinkModal', 'Failed to open Plaid', {
@@ -216,6 +289,7 @@ export default function PlaidLinkModal({
           Logger.error('PlaidLinkModal', 'Initialization error', { error: msg });
         }
       } finally {
+        if (crashGuardTimer) clearTimeout(crashGuardTimer);
         if (isMounted) {
           setIsInitializing(false);
         }
@@ -237,37 +311,39 @@ export default function PlaidLinkModal({
       isMounted = false;
       Logger.debug('PlaidLinkModal', 'useEffect cleanup triggered');
       
+      if (crashGuardTimer) {
+        clearTimeout(crashGuardTimer);
+        Logger.debug('PlaidLinkModal', 'Cleared crash guard timer');
+      }
+      
       if (exitTimeoutRef.current) {
         clearTimeout(exitTimeoutRef.current);
         Logger.debug('PlaidLinkModal', 'Cleared exit timeout');
       }
       
-      // 立即销毁 Plaid session
-      if (sessionRef.current) {
-        try {
-          destroy();
-          sessionRef.current = false;
-          Logger.info('PlaidLinkModal', 'Plaid session destroyed successfully');
-        } catch (err: any) {
-          Logger.warn('PlaidLinkModal', 'Error destroying session', { error: String(err) });
-        }
-      }
+      // 不要在这里销毁 session️ - Plaid 需要保持活跃以完成用户操作
+      // 只有在用户已经退出或完成时才销毁（通过 onSuccess 或 onExit 处理）
+      Logger.debug('PlaidLinkModal', 'useEffect cleanup - session kept alive for user interaction');
       
       Keyboard.dismiss();
     };
   }, [isVisible, linkToken, isInitializing, requestPlaidLinkToken, confirmPlaidExchange, onClose, onSuccess, isTokenExpired]);
 
-  // 重置状态和 ref 当 modal 关闭
+  // 只在 modal 从可见变为不可见时重置状态（防止中断用户操作）
   useEffect(() => {
     if (!isVisible) {
-      Logger.debug('PlaidLinkModal', 'Modal closed - resetting state');
-      tokenRequestAttemptRef.current = false;
-      hasExitedRef.current = false;
-      sessionRef.current = false;
-      setIsLoading(false);
-      setError(null);
-      setIsInitializing(false);
-      Logger.info('PlaidLinkModal', 'State reset complete');
+      // 延迟重置，确保过渡动画完成
+      const resetTimer = setTimeout(() => {
+        Logger.debug('PlaidLinkModal', 'Modal closed - resetting state');
+        tokenRequestAttemptRef.current = false;
+        hasExitedRef.current = false;
+        setIsLoading(false);
+        setError(null);
+        setIsInitializing(false);
+        Logger.info('PlaidLinkModal', 'State reset complete');
+      }, 500);
+      
+      return () => clearTimeout(resetTimer);
     }
   }, [isVisible]);
 
@@ -281,13 +357,16 @@ export default function PlaidLinkModal({
         onClose();
       }}
       onDismiss={() => {
-        Logger.info('PlaidLinkModal', 'Modal dismissed - cleaning up');
-        // 确保 session 被销毁
-        try {
-          destroy();
-          Logger.info('PlaidLinkModal', 'Plaid session destroyed on modal dismiss');
-        } catch (err) {
-          Logger.warn('PlaidLinkModal', 'Session already destroyed or error', { error: String(err) });
+        Logger.info('PlaidLinkModal', 'Modal dismissed - cleaning up Plaid session');
+        // 只在真正关闭时销毁 session
+        if (sessionRef.current) {
+          try {
+            destroy();
+            sessionRef.current = false;
+            Logger.info('PlaidLinkModal', 'Plaid session destroyed on modal dismiss');
+          } catch (err) {
+            Logger.warn('PlaidLinkModal', 'Session already destroyed or error', { error: String(err) });
+          }
         }
         Keyboard.dismiss();
       }}

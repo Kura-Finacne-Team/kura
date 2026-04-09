@@ -287,8 +287,8 @@ export const confirmRegister = (
     throw new AuthApiError(error, 400);
   }
   
-  const payload = { email: normalizedEmail, password, code: verificationCode };
-  Logger.debug('AuthAPI', 'confirmRegister request body', { email: normalizedEmail, password: '***', code: verificationCode });
+  const payload = { email: normalizedEmail, password, registerToken: verificationCode };
+  Logger.debug('AuthAPI', 'confirmRegister request body', { email: normalizedEmail, password: '***', registerToken: verificationCode });
   
   return apiRequest<AuthResponse>('/api/auth/register/confirm', {
     method: 'POST',

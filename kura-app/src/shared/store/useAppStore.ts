@@ -25,7 +25,7 @@ import { type Currency } from '../utils/currencyFormatter';
 import Logger from '../utils/Logger';
 
 export type BaseCurrency = Currency;
-export type Language = 'en' | 'zh';
+export type Language = 'en' | 'zh-TW';
 
 export interface UserProfile {
   displayName: string;
