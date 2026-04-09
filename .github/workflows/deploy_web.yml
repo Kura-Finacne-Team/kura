@@ -7,7 +7,7 @@ on:
       - master
     paths:
       - 'web/**'
-      - '.github/deploy_web.yml'
+      - '.github/workflows/deploy_web.yml'
   workflow_dispatch:
 
 env:
@@ -42,6 +42,7 @@ jobs:
         run: |
           docker build -t gcr.io/$GCP_PROJECT_ID/$SERVICE_NAME:${{ github.sha }} \
                        -t gcr.io/$GCP_PROJECT_ID/$SERVICE_NAME:latest \
+                       -f ./web/Dockerfile \
                        ./web
 
       - name: Push to Google Container Registry
