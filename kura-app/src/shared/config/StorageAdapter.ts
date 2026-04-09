@@ -1,6 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useAppStore } from '../store/useAppStore'
-import { useFinanceStore } from '../store/useFinanceStore'
 
 /**
  * Storage adapter that implements the AppKit Storage interface
@@ -12,27 +10,34 @@ export class StorageAdapter {
   /**
    * Get a value by key
    */
-  async getItem(key: string): Promise<any> {
+  async getItem<T = any>(key: string): Promise<T | undefined> {
     try {
       const prefixedKey = this.prefix + key
       const value = await AsyncStorage.getItem(prefixedKey)
-      return value ? JSON.parse(value) : null
+      if (!value) return undefined
+      try {
+        return JSON.parse(value) as T
+      } catch {
+        // If JSON parse fails, return the string value
+        return value as any
+      }
     } catch (error) {
-      console.error(`Failed to get item ${key}:`, error)
-      return null
+      console.error(`[StorageAdapter] Failed to get item ${key}:`, error)
+      return undefined
     }
   }
 
   /**
    * Set a value by key
    */
-  async setItem(key: string, value: any): Promise<void> {
+  async setItem<T = any>(key: string, value: T): Promise<void> {
     try {
       const prefixedKey = this.prefix + key
       const serialized = typeof value === 'string' ? value : JSON.stringify(value)
       await AsyncStorage.setItem(prefixedKey, serialized)
+      console.log(`[StorageAdapter] Set item ${key}`)
     } catch (error) {
-      console.error(`Failed to set item ${key}:`, error)
+      console.error(`[StorageAdapter] Failed to set item ${key}:`, error)
     }
   }
 
@@ -43,8 +48,9 @@ export class StorageAdapter {
     try {
       const prefixedKey = this.prefix + key
       await AsyncStorage.removeItem(prefixedKey)
+      console.log(`[StorageAdapter] Removed item ${key}`)
     } catch (error) {
-      console.error(`Failed to remove item ${key}:`, error)
+      console.error(`[StorageAdapter] Failed to remove item ${key}:`, error)
     }
   }
 
@@ -55,11 +61,13 @@ export class StorageAdapter {
     try {
       const allKeys = await AsyncStorage.getAllKeys()
       // Filter to only return keys with our prefix
-      return allKeys
+      const filtered = allKeys
         .filter(key => key.startsWith(this.prefix))
         .map(key => key.substring(this.prefix.length))
+      console.log(`[StorageAdapter] Found ${filtered.length} keys`)
+      return filtered
     } catch (error) {
-      console.error('Failed to get keys:', error)
+      console.error('[StorageAdapter] Failed to get keys:', error)
       return []
     }
   }
@@ -67,21 +75,21 @@ export class StorageAdapter {
   /**
    * Get all entries as key-value pairs
    */
-  async getEntries(): Promise<[string, any][]> {
+  async getEntries<T = any>(): Promise<[string, T][]> {
     try {
       const keys = await this.getKeys()
-      const entries: [string, any][] = []
+      const entries: [string, T][] = []
 
       for (const key of keys) {
-        const value = await this.getItem(key)
-        if (value !== null) {
+        const value = await this.getItem<T>(key)
+        if (value !== undefined) {
           entries.push([key, value])
         }
       }
-
+      console.log(`[StorageAdapter] Retrieved ${entries.length} entries`)
       return entries
     } catch (error) {
-      console.error('Failed to get entries:', error)
+      console.error('[StorageAdapter] Failed to get entries:', error)
       return []
     }
   }

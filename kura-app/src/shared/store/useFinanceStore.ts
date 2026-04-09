@@ -2,6 +2,10 @@ import { create } from 'zustand';
 import {
   fetchPlaidFinanceSnapshot,
 } from '../api/plaidApi';
+import {
+  fetchExchangeBalances,
+  ExchangeName,
+} from '../api/exchangeApi';
 import Logger from '../utils/Logger';
 
 export interface Account {
@@ -43,6 +47,22 @@ export interface Investment {
   logo: string;
 }
 
+export interface ExchangeAccount {
+  id: string;
+  exchange: ExchangeName;
+  accountName: string;
+  createdAt: string;
+  lastSyncedAt: string | null;
+  userId: string;
+}
+
+export interface ExchangeBalance {
+  symbol: string;
+  free: number;
+  used: number;
+  total: number;
+}
+
 interface SyncWalletPayload {
   address: string;
   chainId: number;
@@ -65,6 +85,8 @@ interface FinanceState {
   transactions: Transaction[];
   investmentAccounts: InvestmentAccount[];
   investments: Investment[];
+  exchangeAccounts: ExchangeAccount[];
+  exchangeBalances: Record<string, ExchangeBalance[]>; // Map of exchangeAccountId to balances
   isAiOptedIn: boolean;
   selectedTimeRange: '1M' | '3M' | '6M' | '1Y' | 'All';
   chartDataByTimeRange: Record<string, number[]>;
@@ -76,6 +98,8 @@ interface FinanceState {
   // Loading & Error States
   isLoadingPlaidData: boolean;
   plaidError: string | null;
+  isLoadingExchangeData: Record<string, boolean>; // Map of exchangeAccountId to loading state
+  exchangeError: string | null;
   
   // UI Actions
   toggleAiOptIn: () => void;
@@ -97,6 +121,12 @@ interface FinanceState {
   getAssetSnapshotsByTimeRange: (days: number) => AssetSnapshot[]; // 获取特定时间范围内的快照
   clearAssetHistory: () => void; // 清空历史数据
   calculateTotalAssets: () => number; // 计算当前总资产
+  
+  // Exchange Operations
+  addExchangeAccount: (account: ExchangeAccount) => void;
+  removeExchangeAccount: (exchangeAccountId: string) => void;
+  fetchExchangeBalances: (exchangeAccountId: string, token: string) => Promise<void>;
+  setExchangeBalances: (exchangeAccountId: string, balances: ExchangeBalance[]) => void;
   
   // Web3 Wallet Operations
   syncConnectedWalletPosition: (payload: SyncWalletPayload) => Promise<void>;
@@ -129,6 +159,8 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   transactions: [],
   investmentAccounts: [],
   investments: [],
+  exchangeAccounts: [],
+  exchangeBalances: {},
   isAiOptedIn: false,
   selectedTimeRange: '1M',
   chartDataByTimeRange: {
@@ -140,6 +172,8 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   },
   isLoadingPlaidData: false,
   plaidError: null,
+  isLoadingExchangeData: {},
+  exchangeError: null,
   assetHistory: [],
   lastRecordedTime: null,
   
@@ -436,5 +470,127 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   clearAssetHistory: () => {
     Logger.info('FinanceStore', 'Clearing asset history');
     set({ assetHistory: [], lastRecordedTime: null });
+  },
+  
+  // Exchange Operations
+  addExchangeAccount: (account: ExchangeAccount) => {
+    Logger.debug('FinanceStore', 'Adding exchange account', {
+      exchangeName: account.exchangeName,
+      accountId: account.id,
+    });
+    
+    set((state) => {
+      // Check if account already exists
+      const exists = state.exchangeAccounts.some(
+        (existing) => existing.id === account.id
+      );
+      
+      if (exists) {
+        Logger.warn('FinanceStore', 'Exchange account already exists', {
+          accountId: account.id,
+        });
+        return state;
+      }
+      
+      return {
+        exchangeAccounts: [...state.exchangeAccounts, account],
+      };
+    });
+    
+    Logger.info('FinanceStore', 'Exchange account added', {
+      exchangeName: account.exchangeName,
+    });
+  },
+  
+  removeExchangeAccount: (exchangeAccountId: string) => {
+    Logger.debug('FinanceStore', 'Removing exchange account', { accountId: exchangeAccountId });
+    
+    set((state) => ({
+      exchangeAccounts: state.exchangeAccounts.filter(
+        (account) => account.id !== exchangeAccountId
+      ),
+      exchangeBalances: (() => {
+        const newBalances = { ...state.exchangeBalances };
+        delete newBalances[exchangeAccountId];
+        return newBalances;
+      })(),
+    }));
+    
+    Logger.info('FinanceStore', 'Exchange account removed');
+  },
+  
+  setExchangeBalances: (exchangeAccountId: string, balances: ExchangeBalance[]) => {
+    Logger.debug('FinanceStore', 'Setting exchange balances', {
+      accountId: exchangeAccountId,
+      balanceCount: balances.length,
+    });
+    
+    set((state) => ({
+      exchangeBalances: {
+        ...state.exchangeBalances,
+        [exchangeAccountId]: balances,
+      },
+    }));
+  },
+  
+  fetchExchangeBalances: async (exchangeAccountId: string, token: string) => {
+    try {
+      set((state) => ({
+        isLoadingExchangeData: {
+          ...state.isLoadingExchangeData,
+          [exchangeAccountId]: true,
+        },
+        exchangeError: null,
+      }));
+
+      Logger.debug('FinanceStore', 'Fetching exchange balances', {
+        exchangeAccountId,
+      });
+
+      const snapshot = await fetchExchangeBalances(exchangeAccountId, token);
+      
+      Logger.info('FinanceStore', 'Exchange balances fetched successfully', {
+        exchangeAccountId,
+        balanceCount: snapshot.balances.length,
+        totalValueUSD: snapshot.totalValueUSD,
+      });
+
+      set((state) => {
+        // Update the investment account's sync time
+        const updatedAccounts = state.exchangeAccounts.map((account) =>
+          account.id === exchangeAccountId
+            ? { ...account, lastSyncedAt: snapshot.lastFetchedAt }
+            : account
+        );
+
+        return {
+          exchangeAccounts: updatedAccounts,
+          exchangeBalances: {
+            ...state.exchangeBalances,
+            [exchangeAccountId]: snapshot.balances,
+          },
+          isLoadingExchangeData: {
+            ...state.isLoadingExchangeData,
+            [exchangeAccountId]: false,
+          },
+        };
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch exchange balances';
+      Logger.error('FinanceStore', 'Failed to fetch exchange balances', {
+        error: errorMessage,
+        exchangeAccountId,
+      });
+      
+      set((state) => ({
+        isLoadingExchangeData: {
+          ...state.isLoadingExchangeData,
+          [exchangeAccountId]: false,
+        },
+        exchangeError: errorMessage,
+      }));
+      
+      throw error;
+    }
   },
 }));

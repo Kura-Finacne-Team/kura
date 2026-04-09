@@ -1,6 +1,6 @@
 module.exports = {
   expo: {
-    name: "kura-app",
+    name: "kura",
     slug: "kura-app",
     version: "0.0.1",
     orientation: "portrait",
@@ -29,7 +29,21 @@ module.exports = {
         ITSAppUsesNonExemptEncryption: false,
         NSLocalNetworkUsageDescription: "This app needs access to your local network to connect to financial services",
         NSBonjourServiceTypes: ["_http._tcp", "_https._tcp"],
+        // Wallet detection - allows AppKit to detect installed wallets on iOS
+        LSApplicationQueriesSchemes: [
+          "metamask",
+          "trust",
+          "safe",
+          "rainbow",
+          "uniswap",
+          "oneinch",
+          "ledger",
+          "coinbase",
+          "walletconnect"
+        ]
       },
+      // Deep linking support for wallet redirects
+      scheme: "kura"
     },
     android: {
       package: "com.rick.kuraapp",
@@ -39,6 +53,33 @@ module.exports = {
       },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
+      // Deep linking support for wallet redirects
+      scheme: "kura",
+      // Wallet queries for Android
+      intentFilters: [
+        {
+          action: "android.intent.action.VIEW",
+          autoVerify: true,
+          data: {
+            scheme: "https",
+            host: "*.kurafinance.app"
+          },
+          category: [
+            "android.intent.category.DEFAULT",
+            "android.intent.category.BROWSABLE"
+          ]
+        },
+        {
+          action: "android.intent.action.VIEW",
+          data: {
+            scheme: "kura"
+          },
+          category: [
+            "android.intent.category.DEFAULT",
+            "android.intent.category.BROWSABLE"
+          ]
+        }
+      ]
     },
     web: {
       favicon: "./assets/favicon.png",

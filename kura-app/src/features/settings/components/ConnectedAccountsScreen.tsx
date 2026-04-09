@@ -5,7 +5,7 @@ import { useFinanceStore } from '../../../shared/store/useFinanceStore';
 import { useAppStore } from '../../../shared/store/useAppStore';
 import ConnectAccountModal from '../../../shared/components/ConnectAccountModal';
 import PlaidLinkModal from '../../../shared/components/PlaidLinkModal';
-import AppKitWalletModal from '../../../shared/components/AppKitWalletModal';
+import ExchangeLinkModal from '../../../shared/components/ExchangeLinkModal';
 
 interface ConnectedAccountsScreenProps {
   onClose: () => void;
@@ -40,9 +40,10 @@ const getAccountIcon = (type: string): string => {
 export default function ConnectedAccountsScreen({ onClose }: ConnectedAccountsScreenProps) {
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showPlaidModal, setShowPlaidModal] = useState(false);
-  const [showWeb3Modal, setShowWeb3Modal] = useState(false);
+  const [showExchangeModal, setShowExchangeModal] = useState(false);
   const accounts = useFinanceStore((state) => state.accounts);
   const investmentAccounts = useFinanceStore((state) => state.investmentAccounts);
+  const exchangeAccounts = useFinanceStore((state) => state.exchangeAccounts);
   const plaidLinkToken = useAppStore((state: any) => state.plaidLinkToken);
 
   const handleDisconnect = (accountId: string) => {
@@ -60,7 +61,7 @@ export default function ConnectedAccountsScreen({ onClose }: ConnectedAccountsSc
     setShowConnectModal(true);
   };
 
-  // 合并所有账户（银行账户 + 投资账户）
+  // 合并所有账户（银行账户 + 投资账户 + 交易所账户）
   const allConnectedAccounts = [
     ...accounts.map((acc) => ({
       ...acc,
@@ -73,6 +74,13 @@ export default function ConnectedAccountsScreen({ onClose }: ConnectedAccountsSc
       category: 'Investment',
       typeLabel: getAccountTypeLabel(acc.type),
       icon: getAccountIcon(acc.type),
+    })),
+    ...exchangeAccounts.map((acc) => ({
+      ...acc,
+      name: acc.accountName,
+      category: 'Exchange',
+      typeLabel: getAccountTypeLabel(acc.exchange),
+      icon: getAccountIcon('Exchange'),
     })),
   ];
 
@@ -149,7 +157,11 @@ export default function ConnectedAccountsScreen({ onClose }: ConnectedAccountsSc
           isOpen={showConnectModal}
           onClose={() => setShowConnectModal(false)}
           onPlaidPress={() => setShowPlaidModal(true)}
-          onWeb3Press={() => setShowWeb3Modal(true)}
+          onWeb3Press={() => {
+            // Web3 wallet connection is handled directly by AppKit modal
+            // No additional modal needed
+          }}
+          onExchangePress={() => setShowExchangeModal(true)}
         />
 
         {/* Plaid Link Modal */}
@@ -160,10 +172,14 @@ export default function ConnectedAccountsScreen({ onClose }: ConnectedAccountsSc
           onSuccess={() => setShowPlaidModal(false)}
         />
 
-        {/* Web3 Wallet Modal */}
-        <AppKitWalletModal
-          isVisible={showWeb3Modal}
-          onClose={() => setShowWeb3Modal(false)}
+        {/* Exchange Link Modal */}
+        <ExchangeLinkModal
+          isOpen={showExchangeModal}
+          onClose={() => setShowExchangeModal(false)}
+          onSuccess={() => {
+            // Exchange account connected successfully
+            // You can add additional logic here if needed
+          }}
         />
       </ScrollView>
     </View>

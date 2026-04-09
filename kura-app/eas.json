@@ -5,10 +5,23 @@
   "build": {
     "production": {
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle",
+        "credentialsSource": "local"
       },
       "ios": {
-        "image": "default"
+        "credentialsSource": "local"
+      },
+      "env": {
+        "EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID": "@WALLETCONNECT_PROJECT_ID"
+      }
+    },
+    "preview": {
+      "android": {
+        "buildType": "apk",
+        "credentialsSource": "local"
+      },
+      "ios": {
+        "credentialsSource": "local"
       },
       "env": {
         "EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID": "@WALLETCONNECT_PROJECT_ID"
@@ -16,10 +29,11 @@
     },
     "release": {
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle",
+        "credentialsSource": "local"
       },
       "ios": {
-        "image": "default"
+        "credentialsSource": "local"
       },
       "env": {
         "EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID": "@WALLETCONNECT_PROJECT_ID"

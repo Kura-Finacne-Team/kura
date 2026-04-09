@@ -1,12 +1,12 @@
-// src/AppKitConfig.ts (or wherever you prefer to configure it)
-import { createAppKit, bitcoin, solana, type AppKitNetwork } from '@reown/appkit-react-native'
-import { EthersAdapter } from '@reown/appkit-ethers-react-native'
+// src/AppKitConfig.ts - AppKit initialization with WalletConnect support
+import '@walletconnect/react-native-compat'
 
-// You can use 'viem/chains' or define your own chains using `AppKitNetwork` type. Check Options/networks for more detailed info
+import { createAppKit } from '@reown/appkit-react-native'
+import { EthersAdapter } from '@reown/appkit-ethers-react-native'
 import { mainnet, polygon } from 'viem/chains'
 import { storageAdapter } from './StorageAdapter'
 
-const projectId = process.env.WALLETCONNECT_PROJECT_ID
+const projectId = process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID
 
 if (!projectId) {
   throw new Error(
@@ -17,22 +17,26 @@ if (!projectId) {
 
 const ethersAdapter = new EthersAdapter()
 
+/**
+ * AppKit Configuration
+ * Supports EVM chains: Ethereum and Polygon
+ * Enables wallet detection and QR code connection via WalletConnect
+ */
 export const appKit = createAppKit({
   projectId,
-  networks: [mainnet, polygon, solana, bitcoin],
-  defaultNetwork: mainnet, // Optional: set a default network
+  networks: [mainnet, polygon],
+  defaultNetwork: mainnet,
   adapters: [ethersAdapter],
   storage: storageAdapter,
 
-  // Other AppKit options (e.g., metadata for your dApp)
   metadata: {
-    name: 'My Awesome dApp',
-    description: 'My dApp description',
-    url: 'https://myapp.com',
-    icons: ['https://myapp.com/icon.png'],
+    name: 'Kura Finance',
+    description: 'Web3 financial portfolio & investment tracker',
+    url: 'https://kura-finance.app',
+    icons: ['https://assets.reown.com/reown-studio/b6bfe22e-dbc4-4b7e-92c4-704c99fbc51c/image-3.png'],
     redirect: {
-      native: 'YOUR_APP_SCHEME://',
-      universal: 'YOUR_APP_UNIVERSAL_LINK.com'
+      native: 'kura://',
+      universal: 'https://kura-finance.app'
     }
   }
 })

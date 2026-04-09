@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, ActivityIndicator, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Logger from '../utils/Logger';
+import { useAppKitModal } from '../hooks/useAppKitModal';
 
 interface ConnectAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPlaidPress?: () => void;
   onWeb3Press?: () => void;
+  onExchangePress?: () => void;
 }
 
 export default function ConnectAccountModal({
@@ -15,8 +17,10 @@ export default function ConnectAccountModal({
   onClose,
   onPlaidPress,
   onWeb3Press,
+  onExchangePress,
 }: ConnectAccountModalProps) {
-  const [isConnecting, setIsConnecting] = useState<'plaid' | 'web3' | null>(null);
+  const { openWallet } = useAppKitModal();
+  const [isConnecting, setIsConnecting] = useState<'plaid' | 'web3' | 'exchange' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handlePlaidPress = () => {
@@ -42,11 +46,17 @@ export default function ConnectAccountModal({
     try {
       setIsConnecting('web3');
       setError(null);
-      // 直接通知父组件打开 AppKitWalletModal
-      // AppKitWalletModal 会自动处理所有 AppKit 逻辑
+      
+      // Close ConnectAccountModal and open AppKit modal
       onClose();
+      
+      // Small delay to ensure modal closes smoothly
       setTimeout(() => {
+        // Use AppKitModal hook to open wallet
+        openWallet();
         setIsConnecting(null);
+        
+        // Also notify parent component if callback provided
         onWeb3Press?.();
       }, 200);
     } catch (err) {
@@ -54,6 +64,27 @@ export default function ConnectAccountModal({
       setError(errorMsg);
       setIsConnecting(null);
       Logger.error('ConnectAccountModal', 'Failed to open Web3 wallet', { error: errorMsg });
+    }
+  };
+
+  const handleExchangePress = () => {
+    try {
+      setIsConnecting('exchange');
+      setError(null);
+      
+      // Close ConnectAccountModal
+      onClose();
+      
+      // Small delay to ensure modal closes smoothly
+      setTimeout(() => {
+        setIsConnecting(null);
+        onExchangePress?.();
+      }, 200);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to open exchange';
+      setError(errorMsg);
+      setIsConnecting(null);
+      Logger.error('ConnectAccountModal', 'Failed to open exchange', { error: errorMsg });
     }
   };
 
@@ -224,12 +255,54 @@ export default function ConnectAccountModal({
                       <Ionicons name="chevron-forward" size={20} color="#3B82F6" />
                     )}
                   </TouchableOpacity>
+
+                  {/* Exchange Button */}
+                  <TouchableOpacity
+                    onPress={handleExchangePress}
+                    disabled={isConnecting !== null}
+                    style={{
+                      padding: 16,
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: isConnecting === 'exchange' ? 'rgba(34, 197, 94, 0.5)' : 'rgba(255, 255, 255, 0.05)',
+                      backgroundColor: isConnecting === 'exchange' ? 'rgba(34, 197, 94, 0.1)' : '#1A1A24',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 16,
+                    }}
+                  >
+                    {/* Icon */}
+                    <View
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 12,
+                        backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Ionicons name="swap-horizontal" size={24} color="#22C55E" />
+                    </View>
+
+                    {/* Content */}
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '600', color: '#22C55E', marginBottom: 4 }}>Exchange</Text>
+                      <Text style={{ fontSize: 12, color: '#9CA3AF', lineHeight: 16 }}>Connect crypto exchange accounts</Text>
+                    </View>
+
+                    {/* Spinner or Arrow */}
+                    {isConnecting === 'exchange' ? (
+                      <ActivityIndicator color="#22C55E" size="small" />
+                    ) : (
+                      <Ionicons name="chevron-forward" size={20} color="#22C55E" />
+                    )}
+                  </TouchableOpacity>
                 </View>
               </View>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-
     </>
   );
 }

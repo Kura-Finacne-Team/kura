@@ -8,7 +8,7 @@ import AccountCapsules from '../components/AccountCapsules';
 import HoldingsList from '../components/HoldingsList';
 import ConnectAccountModal from '../../../shared/components/ConnectAccountModal';
 import PlaidLinkModal from '../../../shared/components/PlaidLinkModal';
-import AppKitWalletModal from '../../../shared/components/AppKitWalletModal';
+import ExchangeLinkModal from '../../../shared/components/ExchangeLinkModal';
 
 export default function InvestmentScreen() {
   const investmentAccounts = useFinanceStore((state) => state.investmentAccounts);
@@ -18,7 +18,7 @@ export default function InvestmentScreen() {
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showPlaidModal, setShowPlaidModal] = useState(false);
-  const [showWeb3Modal, setShowWeb3Modal] = useState(false);
+  const [showExchangeModal, setShowExchangeModal] = useState(false);
   const plaidLinkToken = useAppStore((state: any) => state.plaidLinkToken);
 
   const displayedInvestments = useMemo(() => {
@@ -54,7 +54,11 @@ export default function InvestmentScreen() {
         isOpen={showConnectModal}
         onClose={() => setShowConnectModal(false)}
         onPlaidPress={() => setShowPlaidModal(true)}
-        onWeb3Press={() => setShowWeb3Modal(true)}
+        onWeb3Press={() => {
+          // Web3 wallet connection is handled directly by AppKit modal
+          // No additional modal needed
+        }}
+        onExchangePress={() => setShowExchangeModal(true)}
       />
 
       {/* Plaid Link Modal */}
@@ -65,10 +69,14 @@ export default function InvestmentScreen() {
         onSuccess={() => setShowPlaidModal(false)}
       />
 
-      {/* Web3 Wallet Modal */}
-      <AppKitWalletModal
-        isVisible={showWeb3Modal}
-        onClose={() => setShowWeb3Modal(false)}
+      {/* Exchange Link Modal */}
+      <ExchangeLinkModal
+        isOpen={showExchangeModal}
+        onClose={() => setShowExchangeModal(false)}
+        onSuccess={() => {
+          // Exchange account connected successfully
+          // You can add additional logic here if needed
+        }}
       />
     </View>
   );

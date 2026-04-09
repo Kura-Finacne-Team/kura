@@ -13,7 +13,7 @@ import TabNavigator from './src/components/TabNavigator';
 import LoginScreen from './src/features/auth/screens/LoginScreen';
 import SignupScreen from './src/features/auth/screens/SignupScreen';
 import ForgotPasswordScreen from './src/features/auth/screens/ForgotPasswordScreen';
-import { AppKitProvider } from '@reown/appkit-react-native'
+import { AppKitProvider, AppKit } from '@reown/appkit-react-native'
 import { appKit } from './src/shared/config/AppKitConfig';
 
 
@@ -88,6 +88,12 @@ function MainNavigator() {
       <Header />
       {/* TabNavigator 占據剩餘空間 */}
       <TabNavigator />
+      
+      {/* AppKit Modal - Rendered here for proper z-index and accessibility */}
+      {/* On Android with Expo, wrap in an absolute positioned View for modal to appear */}
+      <View style={{ position: 'absolute', height: '100%', width: '100%', pointerEvents: 'box-none' }}>
+        <AppKit />
+      </View>
     </View>
   );
 }
@@ -128,10 +134,10 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AppKitProvider instance={appKit}>
-      <NavigationContainer theme={KuraDarkTheme}>
-        <StatusBar style="light" translucent={true} />
-        {authStatus === 'authenticated' ? <MainNavigator /> : <AuthNavigator />}
-      </NavigationContainer>
+        <NavigationContainer theme={KuraDarkTheme}>
+          <StatusBar style="light" translucent={true} />
+          {authStatus === 'authenticated' ? <MainNavigator /> : <AuthNavigator />}
+        </NavigationContainer>
       </AppKitProvider>
     </SafeAreaProvider>
   );

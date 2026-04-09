@@ -5,7 +5,7 @@ import type { Account } from '../../../shared/store/useFinanceStore';
 import { useAppStore } from '../../../shared/store/useAppStore';
 import ConnectAccountModal from '../../../shared/components/ConnectAccountModal';
 import PlaidLinkModal from '../../../shared/components/PlaidLinkModal';
-import AppKitWalletModal from '../../../shared/components/AppKitWalletModal';
+import ExchangeLinkModal from '../../../shared/components/ExchangeLinkModal';
 
 interface AccountsListProps {
   accounts: Account[];
@@ -32,7 +32,7 @@ export default function AccountsList({
   const scrollViewRef = useRef<ScrollView>(null);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showPlaidModal, setShowPlaidModal] = useState(false);
-  const [showWeb3Modal, setShowWeb3Modal] = useState(false);
+  const [showExchangeModal, setShowExchangeModal] = useState(false);
   const plaidLinkToken = useAppStore((state: any) => state.plaidLinkToken);
 
   // 默认滚动到最底部
@@ -210,7 +210,11 @@ export default function AccountsList({
         isOpen={showConnectModal}
         onClose={() => setShowConnectModal(false)}
         onPlaidPress={() => setShowPlaidModal(true)}
-        onWeb3Press={() => setShowWeb3Modal(true)}
+        onWeb3Press={() => {
+          // Web3 wallet connection is handled directly by AppKit modal
+          // No additional modal needed
+        }}
+        onExchangePress={() => setShowExchangeModal(true)}
       />
 
       {/* Plaid Link Modal */}
@@ -221,10 +225,14 @@ export default function AccountsList({
         onSuccess={() => setShowPlaidModal(false)}
       />
 
-      {/* Web3 Wallet Modal */}
-      <AppKitWalletModal
-        isVisible={showWeb3Modal}
-        onClose={() => setShowWeb3Modal(false)}
+      {/* Exchange Link Modal */}
+      <ExchangeLinkModal
+        isOpen={showExchangeModal}
+        onClose={() => setShowExchangeModal(false)}
+        onSuccess={() => {
+          // Exchange account connected successfully
+          // You can add additional logic here if needed
+        }}
       />
     </>
   );
