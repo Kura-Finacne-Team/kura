@@ -37,7 +37,4 @@ scripts/
 
 # Other
 .eslintignore
-eslint.config.mjs
-postcss.config.mjs
-tsconfig.json
 tailwind.config.ts
