@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SUPPORTED_CURRENCIES, getCurrencyName } from '../../../shared/utils/currencyFormatter';
 
 interface BaseCurrencySelectorProps {
   selectedCurrency: 'USD' | 'EUR' | 'TWD';
   onSelectCurrency: (currency: 'USD' | 'EUR' | 'TWD') => void;
 }
-
-const CURRENCIES = ['USD', 'EUR', 'TWD'] as const;
 
 export default function BaseCurrencySelector({ selectedCurrency, onSelectCurrency }: BaseCurrencySelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,7 +34,7 @@ export default function BaseCurrencySelector({ selectedCurrency, onSelectCurrenc
 
       {isOpen && (
         <View style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 8, backgroundColor: '#1A1A24', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.2)', zIndex: 1000, overflow: 'hidden' }}>
-          {CURRENCIES.map((currency, index) => (
+          {(SUPPORTED_CURRENCIES as Array<'USD' | 'EUR' | 'TWD'>).map((currency, index) => (
             <TouchableOpacity
               key={currency}
               onPress={() => handleSelectCurrency(currency)}
@@ -43,14 +42,17 @@ export default function BaseCurrencySelector({ selectedCurrency, onSelectCurrenc
                 paddingHorizontal: 16,
                 paddingVertical: 12,
                 backgroundColor: selectedCurrency === currency ? 'rgba(139, 92, 246, 0.2)' : '#1A1A24',
-                borderBottomWidth: index < CURRENCIES.length - 1 ? 1 : 0,
+                borderBottomWidth: index < (SUPPORTED_CURRENCIES as Array<'USD' | 'EUR' | 'TWD'>).length - 1 ? 1 : 0,
                 borderBottomColor: 'rgba(139, 92, 246, 0.1)',
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
               }}
             >
-              <Text style={{ color: '#FFFFFF', fontWeight: '500', fontSize: 14 }}>{currency}</Text>
+              <View>
+                <Text style={{ color: '#FFFFFF', fontWeight: '500', fontSize: 14 }}>{currency}</Text>
+                <Text style={{ color: '#999999', fontSize: 12, marginTop: 2 }}>{getCurrencyName(currency)}</Text>
+              </View>
               {selectedCurrency === currency && (
                 <Ionicons name="checkmark" size={18} color="#8B5CF6" />
               )}

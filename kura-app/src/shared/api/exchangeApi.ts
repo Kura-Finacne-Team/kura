@@ -7,7 +7,7 @@
 import { getBackendBaseUrl } from './authApi';
 import Logger from '../utils/Logger';
 
-export type ExchangeName = 'binance' | 'kraken' | 'coinbase' | 'okx' | 'huobi';
+export type ExchangeName = 'binance' | 'kraken' | 'coinbase' | 'okx' | 'huobi' | 'bybit' | 'kucoin' | 'bitget' | 'gateio';
 
 export interface ExchangeCredentials {
   exchange: ExchangeName;
@@ -18,9 +18,10 @@ export interface ExchangeCredentials {
 
 export interface SupportedExchange {
   id: ExchangeName;
-  name: string;
-  logo: string;
+  displayName: string;
   requiresPassphrase: boolean;
+  icon: string;
+  website: string;
 }
 
 export interface ExchangeAccount {

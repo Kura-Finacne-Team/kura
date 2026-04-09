@@ -1,13 +1,10 @@
 import React from 'react';
 import { View, Text } from 'react-native';
+import CurrencyDisplay from '../../../shared/components/CurrencyDisplay';
 import { useFinanceStore, AssetSnapshot } from '../../../shared/store/useFinanceStore';
 
 interface PerformanceSummaryProps {
   timeRange?: '1M' | '3M' | '6M' | '1Y' | 'All';
-}
-
-function formatCurrency(value: number) {
-  return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function formatPercentage(value: number) {
@@ -95,9 +92,12 @@ export default function PerformanceSummary({
           <Text style={{ color: '#999999', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.3 }}>
             Total Assets
           </Text>
-          <Text style={{ color: '#FFFFFF', fontSize: 36, fontWeight: 'bold', marginTop: 8 }}>
-            {formatCurrency(metrics.currentTotal)}
-          </Text>
+          <CurrencyDisplay 
+            value={metrics.currentTotal} 
+            fontSize={36}
+            color="#FFFFFF"
+            style={{ marginTop: 8, fontWeight: 'bold' }}
+          />
         </View>
         
         <View style={{ justifyContent: 'flex-start' }}>
@@ -110,9 +110,12 @@ export default function PerformanceSummary({
             <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600' }}>
               {changeIcon} {formatPercentage(metrics.changePercent)}
             </Text>
-            <Text style={{ color: '#FFFFFF', fontSize: 10, marginTop: 4 }}>
-              {formatCurrency(Math.abs(metrics.change))}
-            </Text>
+            <CurrencyDisplay 
+              value={Math.abs(metrics.change)} 
+              fontSize={10}
+              color="#FFFFFF"
+              style={{ marginTop: 4 }}
+            />
           </View>
         </View>
       </View>

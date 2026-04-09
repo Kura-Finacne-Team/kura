@@ -4,16 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { Transaction } from '../../../shared/store/useFinanceStore';
+import CurrencyDisplay from '../../../shared/components/CurrencyDisplay';
 
 interface TransactionsDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   account: any;
   transactions: Transaction[];
-}
-
-function formatCurrency(value: number) {
-  return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export default function TransactionsDetailModal({ 
@@ -39,9 +36,9 @@ export default function TransactionsDetailModal({
           : 'Account';
 
   const balance = (account as any).balance ?? 0;
-  const balanceLabel = accountType === 'credit' || accountType === 'all'
-    ? `-${formatCurrency(balance)}`
-    : formatCurrency(balance);
+  const balanceValue = accountType === 'credit' || accountType === 'all'
+    ? -balance
+    : balance;
 
   return (
     <Modal visible={isOpen} transparent animationType="fade">
@@ -114,9 +111,12 @@ export default function TransactionsDetailModal({
                     </Text>
                   </View>
                   {/* Right: Balance */}
-                  <Text style={{ fontSize: 18, fontWeight: '700', color: '#FFFFFF', marginLeft: 16 }}>
-                    {balanceLabel}
-                  </Text>
+                  <CurrencyDisplay
+                    value={balanceValue}
+                    fontSize={18}
+                    color="#FFFFFF"
+                    style={{ marginLeft: 16, fontWeight: '700' }}
+                  />
                 </View>
 
                 {/* Bottom Row: Account Type */}
@@ -208,16 +208,24 @@ export default function TransactionsDetailModal({
                     </View>
 
                     {/* Amount */}
-                    <Text
-                      style={{
-                        color: isExpense ? '#FFFFFF' : '#4ADE80',
-                        fontSize: 14,
-                        fontWeight: '500',
-                        fontFamily: 'monospace',
-                      }}
-                    >
-                      {isExpense ? '-' : '+'}{formatCurrency(Number(transaction.amount))}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text
+                        style={{
+                          color: isExpense ? '#FFFFFF' : '#4ADE80',
+                          fontSize: 14,
+                          fontWeight: '500',
+                          fontFamily: 'monospace',
+                        }}
+                      >
+                        {isExpense ? '-' : '+'}
+                      </Text>
+                      <CurrencyDisplay
+                        value={Number(transaction.amount)}
+                        fontSize={14}
+                        color={isExpense ? '#FFFFFF' : '#4ADE80'}
+                        style={{ fontFamily: 'monospace', fontWeight: '500' }}
+                      />
+                    </View>
                   </View>
                 );
               })

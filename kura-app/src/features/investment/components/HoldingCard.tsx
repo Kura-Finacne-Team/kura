@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
+import CurrencyDisplay from '../../../shared/components/CurrencyDisplay';
 
 interface Investment {
   id: string;
@@ -13,10 +14,6 @@ interface Investment {
 interface HoldingCardProps {
   investment: Investment;
   totalValue: number;
-}
-
-function formatCurrency(value: number) {
-  return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export default function HoldingCard({ investment, totalValue }: HoldingCardProps) {
@@ -48,7 +45,12 @@ export default function HoldingCard({ investment, totalValue }: HoldingCardProps
         </View>
       </View>
       <View style={{ alignItems: 'flex-end' }}>
-        <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '600', fontFamily: 'monospace' }}>{formatCurrency(positionValue)}</Text>
+        <CurrencyDisplay 
+          value={positionValue} 
+          fontSize={14}
+          color="#FFFFFF"
+          style={{ fontFamily: 'monospace' }}
+        />
         <Text style={{ color: isPositive ? '#4ADE80' : '#EF4444', fontSize: 11, fontWeight: '600', marginTop: 2 }}>
           {isPositive ? '+' : ''}{investment.change24h.toFixed(2)}%
         </Text>

@@ -6,6 +6,7 @@ import { useAppStore } from '../../../shared/store/useAppStore';
 import ConnectAccountModal from '../../../shared/components/ConnectAccountModal';
 import PlaidLinkModal from '../../../shared/components/PlaidLinkModal';
 import ExchangeLinkModal from '../../../shared/components/ExchangeLinkModal';
+import CurrencyDisplay from '../../../shared/components/CurrencyDisplay';
 
 interface AccountsListProps {
   accounts: Account[];
@@ -18,10 +19,6 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CARD_HEIGHT = 118; // 卡片高度
 const CARD_OVERLAP = 80; // 重叠距离
 const CONTAINER_HEIGHT = Math.round(SCREEN_HEIGHT * 0.28); // 容器高度
-
-function formatCurrency(value: number) {
-  return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 export default function AccountsList({
   accounts,
@@ -101,9 +98,7 @@ export default function AccountsList({
           {/* 帳戶卡片 - 從高 index 開始渲染（排序在上面） */}
           {[...accounts].reverse().map((account, index) => {
             const isSelected = selectedAccountId === account.id;
-            const balanceLabel = account.type === 'credit'
-              ? `-${formatCurrency(account.balance)}`
-              : formatCurrency(account.balance);
+            const balanceValue = account.type === 'credit' ? -account.balance : account.balance;
             // 第一个卡片无负margin，之后的卡片都用负margin实现重叠
             const marginTop = -CARD_OVERLAP;
             
@@ -145,9 +140,12 @@ export default function AccountsList({
                     </View>
                     {/* Right Container - Balance */}
                     <View>
-                      <Text style={{ fontSize: 18, color: '#FFFFFF', fontWeight: '600', marginLeft: 8 }}>
-                        {balanceLabel}
-                      </Text>
+                      <CurrencyDisplay
+                        value={balanceValue}
+                        fontSize={18}
+                        color="#FFFFFF"
+                        style={{ marginLeft: 8 }}
+                      />
                     </View>
                   </View>
 
@@ -192,7 +190,12 @@ export default function AccountsList({
                 </View>
                 {/* Right Container - Total Balance */}
                 <View>
-                  <Text style={{ fontSize: 18, color: '#FFFFFF', fontWeight: '600', marginLeft: 8 }}>{formatCurrency(totalBalance)}</Text>
+                  <CurrencyDisplay
+                    value={totalBalance}
+                    fontSize={18}
+                    color="#FFFFFF"
+                    style={{ marginLeft: 8 }}
+                  />
                 </View>
               </View>
 

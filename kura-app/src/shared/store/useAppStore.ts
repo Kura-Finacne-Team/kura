@@ -19,10 +19,12 @@ import {
   exchangePlaidPublicToken,
   disconnectPlaidAccount as disconnectPlaidAccountApi,
 } from '../api/plaidApi';
+import { fetchExchangeRates, isCacheValid, type ExchangeRates } from '../api/exchangeRateApi';
 import { useFinanceStore } from './useFinanceStore';
+import { type Currency } from '../utils/currencyFormatter';
 import Logger from '../utils/Logger';
 
-export type BaseCurrency = 'USD' | 'EUR' | 'TWD';
+export type BaseCurrency = Currency;
 
 export interface UserProfile {
   displayName: string;
@@ -59,6 +61,8 @@ interface AppState {
   plaidLinkTokenTimestamp: number | null;
   authToken: string | null;
   authError: string | null;
+  exchangeRates: ExchangeRates | null;
+  isLoadingExchangeRates: boolean;
 
   // Auth methods
   login: (email: string, password: string) => Promise<void>;
@@ -82,6 +86,9 @@ interface AppState {
   setAuthToken: (token: string | null) => void;
   clearAuthSession: () => void;
   hydrateUserProfile: () => Promise<void>;
+  
+  // Exchange rate methods
+  loadExchangeRates: () => Promise<void>;
   
   // Plaid methods
   requestPlaidLinkToken: () => Promise<string | null>;
@@ -110,6 +117,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   plaidLinkTokenTimestamp: null,
   authToken: null,
   authError: null,
+  exchangeRates: null,
+  isLoadingExchangeRates: false,
 
   // Auth methods
   login: async (email: string, password: string) => {
@@ -153,6 +162,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       } catch (plaidError) {
         // Plaid data loading is optional - don't fail the login if it fails
         Logger.warn('AppStore', 'Failed to auto-load Plaid data after login', plaidError);
+      }
+
+      // Load exchange rates
+      try {
+        await get().loadExchangeRates();
+      } catch (rateError) {
+        Logger.warn('AppStore', 'Failed to load exchange rates after login', rateError);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Login failed';
@@ -203,6 +219,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       } catch (plaidError) {
         // Plaid data loading is optional - don't fail the signup if it fails
         Logger.warn('AppStore', 'Failed to auto-load Plaid data after signup', plaidError);
+      }
+
+      // Load exchange rates
+      try {
+        await get().loadExchangeRates();
+      } catch (rateError) {
+        Logger.warn('AppStore', 'Failed to load exchange rates after signup', rateError);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Signup failed';
@@ -375,6 +398,13 @@ export const useAppStore = create<AppState>((set, get) => ({
         // Plaid data loading is optional - don't fail the registration if it fails
         Logger.warn('AppStore', 'Failed to auto-load Plaid data after registration confirmation', plaidError);
       }
+
+      // Load exchange rates
+      try {
+        await get().loadExchangeRates();
+      } catch (rateError) {
+        Logger.warn('AppStore', 'Failed to load exchange rates after registration confirmation', rateError);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Registration confirmation failed';
       Logger.error('AppStore', 'Registration confirmation failed', { error: errorMessage });
@@ -429,6 +459,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       } catch (plaidError) {
         // Plaid data loading is optional - don't fail the login if it fails
         Logger.warn('AppStore', 'Failed to auto-load Plaid data', plaidError);
+      }
+
+      // Load exchange rates
+      try {
+        await get().loadExchangeRates();
+      } catch (rateError) {
+        Logger.warn('AppStore', 'Failed to load exchange rates during hydration', rateError);
       }
     } catch (error) {
       Logger.warn('AppStore', 'Failed to hydrate from storage', error);
@@ -518,6 +555,39 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (error) {
       Logger.error('AppStore', 'Failed to hydrate user profile', error);
       set({ authStatus: 'unauthenticated' });
+    }
+  },
+
+  loadExchangeRates: async () => {
+    try {
+      const state = get();
+      
+      // Skip if already loading
+      if (state.isLoadingExchangeRates) {
+        return;
+      }
+
+      // Skip if cached rates are still valid
+      if (state.exchangeRates && isCacheValid(state.exchangeRates.lastUpdated)) {
+        Logger.debug('AppStore', 'Using cached exchange rates');
+        return;
+      }
+
+      Logger.debug('AppStore', 'Loading exchange rates');
+      set({ isLoadingExchangeRates: true });
+
+      const rates = await fetchExchangeRates();
+      set({ exchangeRates: rates, isLoadingExchangeRates: false });
+
+      Logger.info('AppStore', 'Exchange rates loaded successfully', {
+        USD: rates.USD,
+        EUR: rates.EUR,
+        TWD: rates.TWD,
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load exchange rates';
+      Logger.error('AppStore', 'Failed to load exchange rates', { error: errorMessage });
+      set({ isLoadingExchangeRates: false });
     }
   },
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import type { Transaction } from '../../../shared/store/useFinanceStore';
+import CurrencyDisplay from '../../../shared/components/CurrencyDisplay';
 
 interface ActivityContainerProps {
   transactions: Transaction[];
@@ -8,10 +9,6 @@ interface ActivityContainerProps {
   isAiOptedIn: boolean;
   onToggleAiOptIn: () => void;
   onViewAll: () => void;
-}
-
-function formatCurrency(value: number) {
-  return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export default function ActivityContainer({
@@ -57,8 +54,14 @@ export default function ActivityContainer({
                     </View>
                   </View>
                   <Text style={{ color: isExpense ? '#FFFFFF' : '#4ADE80', fontSize: 14, fontWeight: '500', fontFamily: 'monospace' }}>
-                    {isExpense ? '-' : '+'}{formatCurrency(Number(transaction.amount))}
+                    {isExpense ? '-' : '+'}
                   </Text>
+                  <CurrencyDisplay
+                    value={Number(transaction.amount)}
+                    fontSize={14}
+                    color={isExpense ? '#FFFFFF' : '#4ADE80'}
+                    style={{ fontFamily: 'monospace', fontWeight: '500' }}
+                  />
                 </View>
               );
             })}

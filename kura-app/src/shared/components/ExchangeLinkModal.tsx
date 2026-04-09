@@ -15,6 +15,7 @@ import {
   TextInput,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Logger from '../utils/Logger';
@@ -51,20 +52,33 @@ export default function ExchangeLinkModal({
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingExchanges, setIsLoadingExchanges] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [failedIcons, setFailedIcons] = useState<Set<string>>(new Set());
 
   // Fetch supported exchanges on mount
   useEffect(() => {
     const loadSupportedExchanges = async () => {
       try {
         setIsLoadingExchanges(true);
+        setSupportedExchanges([]); // Reset on reload
         Logger.debug('ExchangeLinkModal', 'Loading supported exchanges');
         
         // Pass authToken if available (convert null to undefined)
         const exchanges = await getSupportedExchanges(authToken ?? undefined);
+        
+        Logger.debug('ExchangeLinkModal', 'Exchanges received from API', {
+          count: exchanges.length,
+          exchanges: exchanges,
+        });
+        
+        Logger.debug('ExchangeLinkModal', 'Setting supportedExchanges state', {
+          count: exchanges.length,
+        });
+        
         setSupportedExchanges(exchanges);
         
         Logger.info('ExchangeLinkModal', 'Supported exchanges loaded', {
           count: exchanges.length,
+          stateCount: exchanges.length,
         });
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Failed to load exchanges';
@@ -72,6 +86,7 @@ export default function ExchangeLinkModal({
           error: errorMsg,
         });
         Alert.alert('Error', 'Failed to load supported exchanges');
+        setSupportedExchanges([]); // Reset on error
       } finally {
         setIsLoadingExchanges(false);
       }
@@ -84,12 +99,16 @@ export default function ExchangeLinkModal({
 
   const handleSelectExchange = (exchange: SupportedExchange) => {
     setSelectedExchange(exchange);
-    setAccountName(`${exchange.name} Account`);
+    setAccountName(`${exchange.displayName} Account`);
     setApiKey('');
     setApiSecret('');
     setPassphrase('');
     setError(null);
     setStep('credentials');
+  };
+
+  const handleIconLoadError = (exchangeId: string) => {
+    setFailedIcons(prev => new Set([...prev, exchangeId]));
   };
 
   const handleBack = () => {
@@ -165,7 +184,7 @@ export default function ExchangeLinkModal({
         exchange: selectedExchange.id,
       });
 
-      Alert.alert('Success', `Connected to ${selectedExchange.name}!`);
+      Alert.alert('Success', `Connected to ${selectedExchange.displayName}!`);
 
       // Reset and close
       setStep('select');
@@ -197,6 +216,7 @@ export default function ExchangeLinkModal({
     setAccountName('');
     setError(null);
     setIsLoading(false);
+    setFailedIcons(new Set()); // Reset failed icons on close
     // supportedExchanges state persists for next open
     onClose();
   };
@@ -270,12 +290,12 @@ export default function ExchangeLinkModal({
 
             {/* Content */}
             <ScrollView
-              style={{ flex: 1 }}
+              scrollEnabled={true}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 16 }}
+              contentContainerStyle={{ flexGrow: 1, paddingBottom: 16 }}
             >
               {step === 'select' && (
-                <View style={{ gap: 12 }}>
+                <View style={{ gap: 12, flex: supportedExchanges.length > 0 ? 0 : 1, justifyContent: supportedExchanges.length > 0 ? 'flex-start' : 'center' }}>
                   {isLoadingExchanges ? (
                     <View style={{ paddingVertical: 40, alignItems: 'center' }}>
                       <ActivityIndicator color="#8B5CF6" size="large" />
@@ -311,8 +331,13 @@ export default function ExchangeLinkModal({
                             overflow: 'hidden',
                           }}
                         >
-                          {exchange.logo && exchange.logo.startsWith('http') ? (
-                            <Text style={{ fontSize: 24 }}>🏛️</Text>
+                          {exchange.icon && exchange.icon.startsWith('http') && !failedIcons.has(exchange.id) ? (
+                            <Image
+                              source={{ uri: exchange.icon }}
+                              style={{ width: '100%', height: '100%' }}
+                              onError={() => handleIconLoadError(exchange.id)}
+                              resizeMode="contain"
+                            />
                           ) : (
                             <Text style={{ fontSize: 24 }}>💱</Text>
                           )}
@@ -327,7 +352,7 @@ export default function ExchangeLinkModal({
                               color: '#FFFFFF',
                             }}
                           >
-                            {exchange.name}
+                            {exchange.displayName}
                           </Text>
                         </View>
 
@@ -535,7 +560,7 @@ export default function ExchangeLinkModal({
                         color: '#FFFFFF',
                       }}
                     >
-                      Connect {selectedExchange?.name}
+                      Connect {selectedExchange?.displayName}
                     </Text>
                   )}
                 </TouchableOpacity>
