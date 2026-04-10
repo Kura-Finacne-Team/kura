@@ -54,9 +54,6 @@ export default function Header() {
         style={{ paddingTop: Math.max(insets.top, 10) + 6, paddingHorizontal: 24, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
       >
         <TouchableOpacity onPress={handleLogoPress} style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#8B5CF6', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-            <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>K</Text>
-          </View>
           <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 24, letterSpacing: 0.5 }}>Kura</Text>
         </TouchableOpacity>
 

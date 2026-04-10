@@ -401,7 +401,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       // Fetch profile with 10-second timeout
       Logger.debug('AppStore', 'Found stored token, fetching profile');
       const profilePromise = fetchCurrentUserProfile(storedToken);
-      const profileTimeout = new Promise((_, reject) =>
+      const profileTimeout = new Promise<{ user: import('../api/authApi').BackendUserProfile }>((_, reject) =>
         setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
       );
       const response = await Promise.race([profilePromise, profileTimeout]);

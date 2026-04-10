@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { View, ScrollView } from 'react-native';
 import { useFinanceStore } from '../../../shared/store/useFinanceStore';
-import { useWeb3WalletStore } from '../../../shared/store/useWeb3WalletStore';
 import { useExchangeStore } from '../../../shared/store/useExchangeStore';
 import { useAppStore } from '../../../shared/store/useAppStore';
 import PerformanceSummary from '../components/PerformanceSummary';
@@ -13,29 +12,25 @@ import PlaidLinkModal from '../../../shared/components/PlaidLinkModal';
 import ExchangeLinkModal from '../../../shared/components/ExchangeLinkModal';
 
 export default function InvestmentScreen() {
-  // Finance Store (Plaid/Broker/Exchange)
+  // Finance Store (Plaid/Broker/Exchange/Web3)
   const financeInvestmentAccounts = useFinanceStore((state) => state.investmentAccounts);
   const financeInvestments = useFinanceStore((state) => state.investments);
   const selectedTimeRange = useFinanceStore((state) => state.selectedTimeRange);
   const setSelectedTimeRange = useFinanceStore((state) => state.setSelectedTimeRange);
 
-  // Web3 Wallet Store
-  const walletAccounts = useWeb3WalletStore((state) => state.walletAccounts);
-  const walletInvestments = useWeb3WalletStore((state) => state.walletInvestments);
-
   // Exchange Store
   const exchangeInvestmentAccounts = useExchangeStore((state) => state.exchangeInvestmentAccounts);
   const exchangeInvestments = useExchangeStore((state) => state.exchangeInvestments);
 
-  // Combine data from all three stores
+  // Combine data from all sources (Web3 now stored in FinanceStore)
   const investmentAccounts = useMemo(
-    () => [...financeInvestmentAccounts, ...walletAccounts, ...exchangeInvestmentAccounts],
-    [financeInvestmentAccounts, walletAccounts, exchangeInvestmentAccounts]
+    () => [...financeInvestmentAccounts, ...exchangeInvestmentAccounts],
+    [financeInvestmentAccounts, exchangeInvestmentAccounts]
   );
 
   const investments = useMemo(
-    () => [...financeInvestments, ...walletInvestments, ...exchangeInvestments],
-    [financeInvestments, walletInvestments, exchangeInvestments]
+    () => [...financeInvestments, ...exchangeInvestments],
+    [financeInvestments, exchangeInvestments]
   );
 
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);

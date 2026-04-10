@@ -1,10 +1,9 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useAppKit } from '@reown/appkit-react-native';
-import { AppState, AppStateStatus } from 'react-native';
+import { AppState, type AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ethers } from 'ethers';
 import { useFinanceStore } from '../store/useFinanceStore';
-import { useWeb3WalletStore } from '../store/useWeb3WalletStore';
 import Logger from '../utils/Logger';
 
 const CHAIN_NAMES: Record<number, string> = {
@@ -34,32 +33,48 @@ const RPC_URLS: Record<number, string> = {
   250: 'https://rpc.ftm.tools',
 };
 
-// 輪詢頻率配置
-const POLL_INTERVALS = {
-  FOREGROUND: 30000,  // 30s - 用戶正在使用應用
-  BACKGROUND: 300000, // 5min - 應用在後台
-  DISABLED: 0,        // 0 - 輪詢禁用
-};
+// Provider 缓存 - 避免重复创建 RPC 连接
+const providerCache: Record<number, ethers.JsonRpcProvider> = {};
+
+function getProvider(chainId: number): ethers.JsonRpcProvider {
+  if (!providerCache[chainId]) {
+    const rpcUrl = RPC_URLS[chainId];
+    if (!rpcUrl) {
+      throw new Error(`No RPC URL configured for chainId ${chainId}`);
+    }
+    providerCache[chainId] = new ethers.JsonRpcProvider(rpcUrl);
+  }
+  return providerCache[chainId];
+}
 
 /**
  * Fetch native token balance for a wallet address on a specific chain
+ * Uses AbortController to prevent duplicate concurrent requests
  */
-async function fetchNativeBalance(address: string, chainId: number): Promise<number> {
+async function fetchNativeBalance(
+  address: string, 
+  chainId: number,
+  signal?: AbortSignal
+): Promise<number> {
   try {
-    const rpcUrl = RPC_URLS[chainId];
-    if (!rpcUrl) {
-      Logger.warn('useWalletSync', `No RPC URL for chainId ${chainId}`);
-      return 0;
+    if (signal?.aborted) {
+      throw new Error('Request aborted');
     }
 
-    const provider = new ethers.JsonRpcProvider(rpcUrl);
+    const provider = getProvider(chainId);
     const balanceWei = await provider.getBalance(address);
     const balanceEth = parseFloat(ethers.formatEther(balanceWei));
     
     return balanceEth;
   } catch (err) {
+    if (err instanceof Error && err.message === 'Request aborted') {
+      Logger.debug('useWalletSync', 'Balance fetch cancelled');
+      return 0;
+    }
     Logger.error('useWalletSync', 'Balance fetch failed', {
       error: err instanceof Error ? err.message : String(err),
+      chainId,
+      address: address.substring(0, 6) + '...',
     });
     return 0;
   }
@@ -67,136 +82,93 @@ async function fetchNativeBalance(address: string, chainId: number): Promise<num
 
 /**
  * Unified hook for wallet connection management and sync
- * Monitors AppKit account state via AsyncStorage and syncs to Finance Store
+ * Uses AppKit's native connection events and efficient AsyncStorage checks
  */
 export function useWalletSync() {
   const { open: openAppKit } = useAppKit();
   const syncConnectedWalletPosition = useFinanceStore((state) => state.syncConnectedWalletPosition);
   const removeConnectedWalletPosition = useFinanceStore((state) => state.removeConnectedWalletPosition);
+  
+  // 管理连接状态
+  const [isConnected, setIsConnected] = useState(false);
+  const [address, setAddress] = useState<string | undefined>();
+  const [chainId, setChainId] = useState<number | undefined>();
+  
   const prevStateRef = useRef<{ address?: string; chainId?: number }>({});
-  const [accountState, setAccountState] = useState<{ address?: string; chainId?: number }>({});
-  const [appState, setAppState] = useState<AppStateStatus>('active');
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const balanceFetchRef = useRef<AbortController | null>(null);
 
-  // 監聽 App 前後台狀態
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      const isEnteringForeground = (
-        appState.match(/inactive|background/) && nextAppState === 'active'
-      );
-      
-      if (isEnteringForeground) {
-        Logger.info('useWalletSync', '📱 App entered foreground');
-        // 立即檢查一次
-        checkAccountStateOnce();
-      } else if (!nextAppState.match(/active|inactive/)) {
-        Logger.info('useWalletSync', '📱 App entered background');
-      }
-      
-      setAppState(nextAppState);
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [appState]);
-
-  // 根據 App 狀態調整輪詢頻率
-  useEffect(() => {
-    const pollInterval = appState === 'active' 
-      ? POLL_INTERVALS.FOREGROUND 
-      : POLL_INTERVALS.BACKGROUND;
-
-    // 清理舊的輪詢
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
+  // 将同步逻辑提取为 useCallback，这样可以在任何地方调用
+  const performSync = useCallback(async () => {
+    // 取消之前的请求
+    if (balanceFetchRef.current) {
+      balanceFetchRef.current.abort();
     }
 
-    // 設定新的輪詢頻率
-    if (pollInterval > 0) {
-      Logger.info('useWalletSync', `🔄 Polling interval set to ${pollInterval / 1000}s (${appState})`);
-      
-      // 立即檢查一次
-      checkAccountStateOnce();
-      
-      // 設定定時輪詢
-      intervalRef.current = setInterval(checkAccountStateOnce, pollInterval);
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [appState]);
-
-  const checkAccountStateOnce = async () => {
     try {
       const namespaceKeys = await AsyncStorage.getAllKeys();
+      Logger.debug('useWalletSync', 'All AsyncStorage keys:', {
+        count: namespaceKeys.length,
+        universalProviderKeys: namespaceKeys.filter(k => k.includes('universal_provider')),
+      });
+      
       const namespacesKey = namespaceKeys.find(key => 
         key.includes('universal_provider') && key.includes('/namespaces')
       );
 
-      if (!namespacesKey) {
-        setAccountState({});
-        return;
+      Logger.debug('useWalletSync', 'Found namespaces key:', { namespacesKey });
+
+      let address: string | undefined;
+      let chainId: number | undefined;
+
+      if (namespacesKey) {
+        const namespacesData = await AsyncStorage.getItem(namespacesKey);
+        Logger.debug('useWalletSync', 'Namespaces data:', { 
+          hasData: !!namespacesData,
+          data: namespacesData ? JSON.parse(namespacesData) : null,
+        });
+        
+        if (namespacesData) {
+          const namespaces = JSON.parse(namespacesData);
+          const eip155 = namespaces.eip155;
+          
+          if (eip155?.accounts && eip155.accounts.length > 0) {
+            const accountString = eip155.accounts[0];
+            const [, chainIdStr, parsedAddress] = accountString.split(':');
+            address = parsedAddress;
+            chainId = parseInt(chainIdStr, 10);
+          }
+        }
       }
 
-      const namespacesData = await AsyncStorage.getItem(namespacesKey);
-      if (!namespacesData) {
-        setAccountState({});
-        return;
-      }
-
-      const namespaces = JSON.parse(namespacesData);
-      const eip155 = namespaces.eip155;
-      
-      if (eip155?.accounts && eip155.accounts.length > 0) {
-        const accountString = eip155.accounts[0];
-        const [, chainIdStr, address] = accountString.split(':');
-        const chainId = parseInt(chainIdStr, 10);
-
-        setAccountState({ address, chainId });
-      } else {
-        setAccountState({});
-      }
-    } catch (err) {
-      Logger.error('useWalletSync', 'Failed to read WalletConnect namespaces', {
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
-  };
-
-  // Sync wallet to store when account state changes
-  useEffect(() => {
-    const syncWalletToStore = async () => {
-      const { address, chainId } = accountState;
-      const addWalletPosition = useWeb3WalletStore.getState().addWalletPosition;
-      const removeWalletPosition = useWeb3WalletStore.getState().removeWalletPosition;
-      const clearWeb3Store = useWeb3WalletStore.getState().clearAll;
-
-      // 監聽斷連：如果之前連接（address 存在），現在斷連（accountState 為空）
+      // 监听断开连接
       if (prevStateRef.current.address && !address) {
         Logger.warn('useWalletSync', '🔌 Wallet disconnected');
         
         const prevAddress = prevStateRef.current.address;
         const prevChainId = prevStateRef.current.chainId || 1;
-        const accountId = `wallet-${prevChainId}-${prevAddress.toLowerCase()}`;
-        const investmentId = `wallet-native-${prevChainId}-${prevAddress.toLowerCase()}`;
         
-        // Clear from both stores
         removeConnectedWalletPosition(prevAddress, prevChainId);
-        clearWeb3Store();
+        
+        // 更新状态
+        setIsConnected(false);
+        setAddress(undefined);
+        setChainId(undefined);
+        
+        Logger.info('useWalletSync', '✅ Wallet data cleared', { 
+          address: prevAddress.substring(0, 6) + '...', 
+          chainId: prevChainId 
+        });
         
         prevStateRef.current = {};
         return;
       }
 
+      // 如果未连接或信息不完整
       if (!address || !chainId) {
         return;
       }
 
-      // Check if this is a new connection or first sync
+      // 检查是否是新连接
       const isNewConnection = 
         !prevStateRef.current.address || 
         address !== prevStateRef.current.address || 
@@ -211,16 +183,28 @@ export function useWalletSync() {
       const chainName = CHAIN_NAMES[chainId] || `Chain ${chainId}`;
       const nativeSymbol = CHAIN_NATIVE_SYMBOLS[chainId] || 'TOKEN';
 
-      Logger.info('useWalletSync', '🔗 Connected: ' + chainName, {
+      Logger.info('useWalletSync', '🔗 Wallet connected: ' + chainName, {
         address: address.substring(0, 6) + '...',
         chainId,
       });
 
-      try {
-        // Fetch the actual native balance
-        const nativeBalance = await fetchNativeBalance(address, chainId);
+      // 更新连接状态
+      setIsConnected(true);
+      setAddress(address);
+      setChainId(chainId);
 
-        // Sync to finance store (for backward compatibility)
+      try {
+        // 创建 AbortController 用于取消请求
+        balanceFetchRef.current = new AbortController();
+        
+        // 获取原生代币余额
+        const nativeBalance = await fetchNativeBalance(
+          address, 
+          chainId,
+          balanceFetchRef.current.signal
+        );
+
+        // 同步到 Finance Store
         await syncConnectedWalletPosition({
           address,
           chainId,
@@ -229,95 +213,167 @@ export function useWalletSync() {
           nativeBalance,
         });
 
-        // Also sync to dedicated Web3 wallet store
-        const normalizedAddress = address.toLowerCase();
-        const accountId = `wallet-${chainId}-${normalizedAddress}`;
-        const investmentId = `wallet-native-${chainId}-${normalizedAddress}`;
-        
-        const walletAccount = {
-          id: accountId,
-          name: `${chainName} Wallet`,
-          type: 'Web3 Wallet' as const,
-          logo: 'https://www.google.com/s2/favicons?domain=walletconnect.com&sz=128',
-        };
-
-        const walletInvestment = {
-          id: investmentId,
-          accountId,
-          symbol: nativeSymbol,
-          name: chainName,
-          holdings: nativeBalance,
-          currentPrice: 0, // Will be fetched by finance store
-          change24h: 0,
-          type: 'crypto' as const,
-          logo: 'https://www.google.com/s2/favicons?domain=ethereum.org&sz=128',
-        };
-
-        addWalletPosition(walletAccount, walletInvestment);
-
-        Logger.info('useWalletSync', '✅ Synced to Web3 Wallet Store: ' + nativeSymbol, {
+        Logger.info('useWalletSync', '✅ Wallet synced: ' + nativeSymbol, {
           balance: nativeBalance,
+          address: address.substring(0, 6) + '...',
         });
       } catch (err) {
-        Logger.error('useWalletSync', '❌ Sync failed', {
+        Logger.error('useWalletSync', '❌ Wallet sync failed', {
           error: err instanceof Error ? err.message : String(err),
+          chainId,
         });
       }
-    };
-
-    syncWalletToStore();
-  }, [accountState, syncConnectedWalletPosition, removeConnectedWalletPosition]);
-
-  // Re-sync when currency changes (to fetch price in new currency)
-  const currency = useFinanceStore(state => state.currency);
-  useEffect(() => {
-    if (accountState.address && accountState.chainId) {
-      Logger.info('useWalletSync', '💱 Currency changed, re-syncing wallet', { 
-        currency,
-        address: accountState.address.substring(0, 6) + '...',
-        chainId: accountState.chainId,
-      });
-      
-      const chainName = CHAIN_NAMES[accountState.chainId] || `Chain ${accountState.chainId}`;
-      const nativeSymbol = CHAIN_NATIVE_SYMBOLS[accountState.chainId] || 'TOKEN';
-      
-      fetchNativeBalance(accountState.address, accountState.chainId).then(nativeBalance => {
-        syncConnectedWalletPosition({
-          address: accountState.address || '',
-          chainId: accountState.chainId || 1,
-          chainName,
-          nativeSymbol,
-          nativeBalance,
-        });
-      }).catch(err => {
-        Logger.error('useWalletSync', 'Failed to re-sync on currency change', {
-          error: err instanceof Error ? err.message : String(err),
-        });
+    } catch (err) {
+      Logger.error('useWalletSync', 'Failed to check wallet state', {
+        error: err instanceof Error ? err.message : String(err),
       });
     }
-  }, [currency, accountState.address, accountState.chainId, syncConnectedWalletPosition]);
+  }, [syncConnectedWalletPosition, removeConnectedWalletPosition]);
+
+  // 初始化时检查一次连接状态
+  useEffect(() => {
+    Logger.debug('useWalletSync', 'Initializing wallet sync');
+    performSync();
+  }, [performSync]);
+
+  // 定期检查（10分钟）以防止长时间未同步
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      Logger.debug('useWalletSync', 'Periodic sync check triggered');
+      performSync();
+    }, 10 * 60 * 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [performSync]);
+
+  // 监听 App 生命周期 - 进入前台时检查钱包状态
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'active') {
+        Logger.debug('useWalletSync', 'App resumed to foreground - checking wallet status');
+        // 立即检查一次连接状态
+        performSync();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [performSync]);
 
   return {
+    isConnected,
+    address,
+    chainId,
     openWallet: useCallback(async () => {
       try {
         if (openAppKit) {
+          Logger.info('useWalletSync', '🔓 Opening AppKit modal');
           const result = await openAppKit();
+          // 打开后等待更长时间，让 AppKit 有時間更新狀態并保存到 AsyncStorage
+          Logger.info('useWalletSync', '⏳ Waiting for AppKit to save wallet state (2s delay)');
+          setTimeout(() => {
+            Logger.debug('useWalletSync', 'Syncing after AppKit modal close');
+            performSync();
+          }, 2000); // 增加到 2 秒
           return result;
         }
-        throw new Error('Failed to open AppKit modal');
+        throw new Error('AppKit not initialized');
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err);
-        Logger.error('useWalletSync', 'Failed to open AppKit modal', { error: errorMsg });
+        Logger.error('useWalletSync', '❌ Failed to open AppKit', { error: errorMsg });
         throw err;
       }
-    }, [openAppKit]),
-    // 手動刷新函數 - 用於下拉刷新或按鈕點擊
+    }, [openAppKit, performSync]),
+    
+    // 手动刷新钱包数据（用于下拉刷新或按钮点击）
     refreshBalance: useCallback(async () => {
       Logger.info('useWalletSync', '🔄 Manual refresh triggered');
-      await checkAccountStateOnce();
+      
+      // 立即触发一次检查
+      await (async () => {
+        try {
+          const namespaceKeys = await AsyncStorage.getAllKeys();
+          const namespacesKey = namespaceKeys.find(key => 
+            key.includes('universal_provider') && key.includes('/namespaces')
+          );
+
+          if (!namespacesKey) {
+            return;
+          }
+
+          const namespacesData = await AsyncStorage.getItem(namespacesKey);
+          if (!namespacesData) {
+            return;
+          }
+
+          const namespaces = JSON.parse(namespacesData);
+          const eip155 = namespaces.eip155;
+          
+          if (!(eip155?.accounts && eip155.accounts.length > 0)) {
+            return;
+          }
+
+          const accountString = eip155.accounts[0];
+          const [, chainIdStr, address] = accountString.split(':');
+          const chainId = parseInt(chainIdStr, 10);
+
+          const nativeBalance = await fetchNativeBalance(address, chainId);
+          const chainName = CHAIN_NAMES[chainId] || `Chain ${chainId}`;
+          const nativeSymbol = CHAIN_NATIVE_SYMBOLS[chainId] || 'TOKEN';
+          
+          await syncConnectedWalletPosition({
+            address,
+            chainId,
+            chainName,
+            nativeSymbol,
+            nativeBalance,
+          });
+          
+          Logger.info('useWalletSync', '✅ Manual refresh complete');
+        } catch (err) {
+          Logger.error('useWalletSync', 'Manual refresh failed', {
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      })();
+    }, [syncConnectedWalletPosition]),
+    
+    // 获取当前连接状态
+    getConnectionStatus: useCallback(async () => {
+      try {
+        const namespaceKeys = await AsyncStorage.getAllKeys();
+        const namespacesKey = namespaceKeys.find(key => 
+          key.includes('universal_provider') && key.includes('/namespaces')
+        );
+
+        if (!namespacesKey) {
+          return { isConnected: false, address: undefined, chainId: undefined };
+        }
+
+        const namespacesData = await AsyncStorage.getItem(namespacesKey);
+        if (!namespacesData) {
+          return { isConnected: false, address: undefined, chainId: undefined };
+        }
+
+        const namespaces = JSON.parse(namespacesData);
+        const eip155 = namespaces.eip155;
+        
+        if (!(eip155?.accounts && eip155.accounts.length > 0)) {
+          return { isConnected: false, address: undefined, chainId: undefined };
+        }
+
+        const accountString = eip155.accounts[0];
+        const [, chainIdStr, address] = accountString.split(':');
+        const chainId = parseInt(chainIdStr, 10);
+
+        return { isConnected: true, address, chainId };
+      } catch (err) {
+        Logger.error('useWalletSync', 'Failed to get connection status', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return { isConnected: false, address: undefined, chainId: undefined };
+      }
     }, []),
-    isConnected: !!accountState.address,
-    address: accountState.address,
-    chainId: accountState.chainId,
   };
 }

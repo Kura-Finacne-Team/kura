@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { MdSettings, MdNotifications } from 'react-icons/md';
 import UserSettingsDrawer from './UserSettingsDrawer';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -24,6 +25,19 @@ export default function TopNav() {
 
         {/* 右側控制區 */}
         <div className="flex items-center gap-4">
+          {/* 通知圖標 */}
+          <button className="p-2 rounded-lg hover:bg-[#1A1A24] transition-colors focus:outline-none text-[#A78BFA] hover:text-[#C4B5FD]">
+            <MdNotifications size={20} />
+          </button>
+
+          {/* 設定圖標 */}
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-2 rounded-lg hover:bg-[#1A1A24] transition-colors focus:outline-none text-[#A78BFA] hover:text-[#C4B5FD]"
+          >
+            <MdSettings size={20} />
+          </button>
+
           {/* 使用者頭像 (點擊開啟設定抽屜) */}
           <button 
             onClick={() => setIsSettingsOpen(true)}

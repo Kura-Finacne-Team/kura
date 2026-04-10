@@ -537,23 +537,31 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     
     Logger.info('FinanceStore', 'Wallet position removed');
   },
-  
   // Asset History & Performance Tracking
   calculateTotalAssets: () => {
     const state = get();
     
-    // 银行账户总余额
-    const bankingBalance = state.accounts.reduce((sum, account) => sum + account.balance, 0);
-    
-    // 投资总价值
+    // 投资总价值 (仅计算 Investment 账户的投资，不包括银行账户)
+    // 忽略 USDC 和 USDT 稳定币
+    // Only calculate Investment (Broker/Exchange/Crypto) holdings, exclude banking accounts
+    // Exclude USDC and USDT stablecoins
     const investmentValue = state.investments.reduce((sum, investment) => {
-      return sum + investment.holdings * investment.currentPrice;
+      // Skip USDC and USDT
+      if (investment.symbol === 'USDC' || investment.symbol === 'USDT') {
+        Logger.debug('FinanceStore', 'Skipping stablecoin from calculation', {
+          symbol: investment.symbol,
+          holdings: investment.holdings,
+        });
+        return sum;
+      }
+      
+      const value = investment.holdings * investment.currentPrice;
+      return sum + value;
     }, 0);
     
-    const totalAssets = bankingBalance + investmentValue;
+    const totalAssets = investmentValue;
     
-    Logger.debug('FinanceStore', 'Total assets calculated', {
-      bankingBalance,
+    Logger.debug('FinanceStore', 'Total assets calculated (Investment only, excluding USDC/USDT)', {
       investmentValue,
       totalAssets,
     });
@@ -577,13 +585,23 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     const totalAssets = get().calculateTotalAssets();
     const bankingBalance = state.accounts.reduce((sum, account) => sum + account.balance, 0);
     const investmentValue = state.investments.reduce((sum, investment) => {
+      // Skip USDC and USDT stablecoins
+      if (investment.symbol === 'USDC' || investment.symbol === 'USDT') {
+        return sum;
+      }
       return sum + investment.holdings * investment.currentPrice;
     }, 0);
     const cryptoValue = state.investmentAccounts
       .filter((account) => account.type === 'Web3 Wallet')
       .reduce((sum, account) => {
         const investments = state.investments.filter((inv) => inv.accountId === account.id);
-        return sum + investments.reduce((invSum, inv) => invSum + inv.holdings * inv.currentPrice, 0);
+        return sum + investments.reduce((invSum, inv) => {
+          // Skip USDC and USDT stablecoins
+          if (inv.symbol === 'USDC' || inv.symbol === 'USDT') {
+            return invSum;
+          }
+          return invSum + inv.holdings * inv.currentPrice;
+        }, 0);
       }, 0);
     
     const snapshot: AssetSnapshot = {

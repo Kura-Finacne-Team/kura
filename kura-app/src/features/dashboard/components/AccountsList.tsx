@@ -34,7 +34,7 @@ export default function AccountsList({
   const [showExchangeModal, setShowExchangeModal] = useState(false);
   const plaidLinkToken = useAppStore((state: any) => state.plaidLinkToken);
   
-  // Web3 Wallet
+  // Web3 Wallet - 直接获取连接状态
   const { isConnected, address, openWallet } = useWalletSync();
   const investments = useFinanceStore((state) => state.investments);
   
