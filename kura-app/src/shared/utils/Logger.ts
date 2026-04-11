@@ -1,6 +1,4 @@
 // Logger Utility for better debugging
-import { __DEV__ } from 'react-native';
-
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogEntry {

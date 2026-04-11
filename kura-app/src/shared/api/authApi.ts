@@ -6,7 +6,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import Logger from '../utils/Logger';
-
 // In-memory fallback for when AsyncStorage is unavailable
 let memoryStorage: Record<string, string> = {};
 
@@ -333,9 +332,9 @@ export const updateDisplayName = (
 export const requestEmailChange = (
   token: string,
   newEmail: string
-): Promise<{ message: string }> => {
+): Promise<{ message: string; expiresIn?: number }> => {
   const normalizedEmail = newEmail.toLowerCase().trim();
-  return apiRequest<{ message: string }>('/api/auth/me/email/request-change', {
+  return apiRequest<{ message: string; expiresIn?: number }>('/api/auth/me/email/request-change', {
     method: 'POST',
     body: JSON.stringify({ newEmail: normalizedEmail }),
   }, token);

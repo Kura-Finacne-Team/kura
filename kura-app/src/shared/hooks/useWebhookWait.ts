@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
-import { useFinanceStore } from '../../../shared/store/useFinanceStore';
-import { useExchangeStore } from '../../../shared/store/useExchangeStore';
-import { useAppStore } from '../../../shared/store/useAppStore';
-import Logger from '../../../shared/utils/logger';
+import { useFinanceStore } from '../store/useFinanceStore';
+import { useExchangeStore } from '../store/useExchangeStore';
+import { useAppStore } from '../store/useAppStore';
+import Logger from '../utils/Logger';
 
 /**
  * Hook for waiting and polling after webhook events (account connect/disconnect)
@@ -14,10 +14,10 @@ import Logger from '../../../shared/utils/logger';
  * 3. Then refresh data when ready
  */
 export function useWebhookWait() {
-  const hydratePlaidFinanceData = useFinanceStore((state) => state.hydratePlaidFinanceData);
-  const fetchExchangeBalances = useExchangeStore((state) => state.fetchExchangeBalances);
-  const exchangeAccounts = useExchangeStore((state) => state.exchangeAccounts);
-  const authToken = useAppStore((state) => state.authToken);
+  const hydratePlaidFinanceData = useFinanceStore((state: any) => state.hydratePlaidFinanceData);
+  const fetchExchangeBalances = useExchangeStore((state: any) => state.fetchExchangeBalances);
+  const exchangeAccounts = useExchangeStore((state: any) => state.exchangeAccounts);
+  const authToken = useAppStore((state: any) => state.authToken);
 
   /**
    * Wait for webhook to complete and then refresh data
@@ -51,8 +51,8 @@ export function useWebhookWait() {
 
         // Also refresh exchange data if applicable
         if (exchangeAccounts.length > 0) {
-          const exchangeRefreshPromises = exchangeAccounts.map((account) =>
-            fetchExchangeBalances(account.id, authToken).catch((error) => {
+          const exchangeRefreshPromises = exchangeAccounts.map((account: any) =>
+            fetchExchangeBalances(account.id, authToken).catch((error: any) => {
               Logger.warn('useWebhookWait', `Failed to refresh exchange account ${account.id}`, error);
             })
           );

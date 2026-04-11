@@ -87,7 +87,7 @@ interface AppState {
   
   // User methods
   setDisplayName: (displayName: string) => Promise<void>;
-  requestEmailChange: (newEmail: string) => Promise<void>;
+  requestEmailChange: (newEmail: string) => Promise<{ message: string; expiresIn?: number }>;
   confirmEmailChange: (verificationCode: string) => Promise<void>;
   updateAvatar: (avatarUrl: string) => Promise<void>;
   setBaseCurrency: (currency: BaseCurrency) => void;
@@ -497,8 +497,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
 
       Logger.debug('AppStore', 'Requesting email change', { newEmail });
-      await requestEmailChange(authToken, newEmail);
-      Logger.info('AppStore', 'Email change requested, verification code sent');
+      const response = await requestEmailChange(authToken, newEmail);
+      Logger.info('AppStore', 'Email change requested, verification code sent', { expiresIn: response?.expiresIn });
+      return response;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to request email change';
       Logger.error('AppStore', 'Email change request failed', { error: errorMessage });

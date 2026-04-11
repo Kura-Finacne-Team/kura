@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert, ActivityInd
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../../../shared/store/useAppStore';
 import Logger from '../../../shared/utils/Logger';
+import VerifyEmailChangeScreen from './VerifyEmailChangeScreen';
 
 interface EditEmailScreenProps {
   onClose: () => void;
@@ -13,6 +14,7 @@ export default function EditEmailScreen({ onClose }: EditEmailScreenProps) {
   const requestEmailChange = useAppStore((state) => state.requestEmailChange);
   const [email, setEmailState] = useState(userProfile.email);
   const [isLoading, setIsLoading] = useState(false);
+  const [verifyingEmail, setVerifyingEmail] = useState<{ email: string; expiresIn: number } | null>(null);
 
   const handleSave = async () => {
     if (!email.trim()) {
@@ -34,11 +36,15 @@ export default function EditEmailScreen({ onClose }: EditEmailScreenProps) {
 
     try {
       setIsLoading(true);
-      await requestEmailChange(email);
+      // Cast response to include expiresIn
+      const result = await requestEmailChange(email) as any;
       Logger.info('EditEmailScreen', 'Email change request sent successfully');
-      Alert.alert('Success', 'Verification code sent to your new email address', [
-        { text: 'OK', onPress: onClose }
-      ]);
+      
+      // Show verification code screen
+      setVerifyingEmail({ 
+        email, 
+        expiresIn: result?.expiresIn || 600000 // default 10 minutes
+      });
     } catch (error) {
       Logger.error('EditEmailScreen', 'Failed to request email change', error);
       Alert.alert('Error', error instanceof Error ? error.message : 'Failed to request email change');
@@ -46,6 +52,17 @@ export default function EditEmailScreen({ onClose }: EditEmailScreenProps) {
       setIsLoading(false);
     }
   };
+
+  // If verifying email, show verification screen
+  if (verifyingEmail) {
+    return (
+      <VerifyEmailChangeScreen
+        newEmail={verifyingEmail.email}
+        expiresIn={verifyingEmail.expiresIn}
+        onClose={onClose}
+      />
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#0B0B0F' }}>
@@ -80,10 +97,10 @@ export default function EditEmailScreen({ onClose }: EditEmailScreenProps) {
           {isLoading ? (
             <>
               <ActivityIndicator color="#FFFFFF" size="small" />
-              <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Saving...</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Sending...</Text>
             </>
           ) : (
-            <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Save Changes</Text>
+            <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Send Verification Code</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
