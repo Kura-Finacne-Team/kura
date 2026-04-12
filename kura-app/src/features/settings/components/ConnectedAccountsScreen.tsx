@@ -104,9 +104,9 @@ export default function ConnectedAccountsScreen({ onClose }: ConnectedAccountsSc
                 style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: '#1A1A24', borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.2)' }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                  <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: 'rgba(139, 92, 246, 0.15)', alignItems: 'center', justifyContent: 'center', marginRight: 16, overflow: 'hidden' }}>
+                  <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(139, 92, 246, 0.15)', alignItems: 'center', justifyContent: 'center', marginRight: 16, overflow: 'hidden' }}>
                     {account.logo && account.logo.startsWith('http') ? (
-                      <Image source={{ uri: account.logo }} style={{ width: 32, height: 32 }} />
+                      <Image source={{ uri: account.logo }} style={{ width: 48, height: 48, borderRadius: 24 }} resizeMode="cover" />
                     ) : (
                       <Ionicons name={account.icon as any} size={24} color="#8B5CF6" />
                     )}

@@ -1,8 +1,9 @@
 import { create } from 'zustand';
-import { InvestmentAccount, Investment, ExchangeBalance } from './useFinanceStore';
+import { InvestmentAccount, Investment } from './useFinanceStore';
 import { 
   fetchExchangeBalances as fetchExchangeBalancesApi,
   getConnectedExchangeAccounts,
+  ExchangeBalance,
 } from '../api/exchangeApi';
 import Logger from '../utils/Logger';
 
@@ -59,8 +60,9 @@ function balanceToInvestment(
     symbol: balance.symbol,
     name: balance.symbol, // Will be enriched with coin name if available
     holdings: balance.total,
-    currentPrice: 0, // Will be fetched separately if needed
-    change24h: 0,
+    currentPrice: balance.usdPrice,
+    change24h: balance.change24h,
+    usdValue: balance.usdValue,
     type: 'crypto',
     logo: `https://www.google.com/s2/favicons?domain=${exchange}.com&sz=128`,
   };
@@ -227,35 +229,47 @@ export const useExchangeStore = create<ExchangeStoreState>((set, get) => ({
       const snapshot = await fetchExchangeBalancesApi(exchangeAccountId, token);
 
       Logger.debug('ExchangeStore', 'Exchange snapshot received', {
-        balanceCount: snapshot.balances?.length,
-        totalValueUSD: snapshot.totalValueUSD,
+        balancesCount: snapshot.balances?.length,
+        balancesUsdTotal: snapshot.balancesUsdTotal,
+        assetsCount: snapshot.assets?.length,
+        assetsUsdTotal: snapshot.assetsUsdTotal,
+        positionsCount: snapshot.positions?.length,
+        positionsUsdTotal: snapshot.positionsUsdTotal,
+        totalUsdValue: snapshot.totalUsdValue,
+        accountDisplayName: snapshot.account.displayName,
+        timestamp: snapshot.timestamp,
       });
-
-      const accountForSetup = get().exchangeAccounts.find((acc) => acc.id === exchangeAccountId);
 
       // Create InvestmentAccount for this exchange
       const investmentAccount: InvestmentAccount = {
         id: exchangeAccountId,
-        name: accountForSetup?.accountName || `${accountForSetup?.exchange || 'Unknown'} Account`,
+        name: snapshot.account.displayName || `${snapshot.account.exchange || 'Unknown'} Account`,
         type: 'Exchange',
-        logo: `https://www.google.com/s2/favicons?domain=${accountForSetup?.exchange || 'exchange'}.com&sz=128`,
+        logo: `https://www.google.com/s2/favicons?domain=${snapshot.account.exchange || 'exchange'}.com&sz=128`,
       };
 
-      // Convert ExchangeBalance array to Investment array
+      // Convert balances (總持倉) to Investment array
       const investments = (snapshot.balances || []).map((balance) =>
-        balanceToInvestment(balance, exchangeAccountId, accountForSetup?.exchange || 'unknown')
+        balanceToInvestment(balance, exchangeAccountId, snapshot.account.exchange)
       );
 
       Logger.info('ExchangeStore', 'Exchange balances converted to investments', {
         exchangeAccountId,
         investmentCount: investments.length,
+        balancesCount: snapshot.balances?.length,
+        balancesUsdTotal: snapshot.balancesUsdTotal,
+        assetsCount: snapshot.assets?.length,
+        assetsUsdTotal: snapshot.assetsUsdTotal,
+        positionsCount: snapshot.positions?.length,
+        positionsUsdTotal: snapshot.positionsUsdTotal,
+        totalUsdValue: snapshot.totalUsdValue,
       });
 
       set((state) => {
         // Update exchange account last sync time
         const updatedAccounts = state.exchangeAccounts.map((account) =>
           account.id === exchangeAccountId
-            ? { ...account, lastSyncedAt: snapshot.lastFetchedAt }
+            ? { ...account, lastSyncedAt: snapshot.timestamp }
             : account
         );
 
@@ -268,7 +282,7 @@ export const useExchangeStore = create<ExchangeStoreState>((set, get) => ({
           exchangeAccounts: updatedAccounts,
           exchangeBalances: {
             ...state.exchangeBalances,
-            [exchangeAccountId]: snapshot.balances,
+            [exchangeAccountId]: snapshot.balances, // 總持倉
           },
           exchangeInvestmentAccounts: [
             ...state.exchangeInvestmentAccounts.filter((inv) => inv.id !== exchangeAccountId),
@@ -288,7 +302,13 @@ export const useExchangeStore = create<ExchangeStoreState>((set, get) => ({
 
       Logger.info('ExchangeStore', 'Exchange balances updated successfully', {
         exchangeAccountId,
-        balanceCount: snapshot.balances?.length,
+        balancesCount: snapshot.balances?.length,
+        balancesUsdTotal: snapshot.balancesUsdTotal,
+        assetsCount: snapshot.assets?.length,
+        assetsUsdTotal: snapshot.assetsUsdTotal,
+        positionsCount: snapshot.positions?.length,
+        positionsUsdTotal: snapshot.positionsUsdTotal,
+        totalUsdValue: snapshot.totalUsdValue,
         investmentCount: investments.length,
       });
     } catch (error) {

@@ -38,7 +38,8 @@ export interface Investment {
   name: string;
   holdings: number;
   currentPrice: number;
-  change24h: number;
+  change24h: number; // 24小時價格變化百分比
+  usdValue: number; // 持倉總USD價值 (holdings * currentPrice)
   type: 'crypto' | 'stock' | 'etf';
   logo: string;
 }

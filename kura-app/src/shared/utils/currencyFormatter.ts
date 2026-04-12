@@ -52,7 +52,11 @@ export const EXCHANGE_RATES: Record<Currency, number> = {
  * @param currency - The currency code
  * @returns Formatted currency string
  */
-export function formatCurrency(value: number, currency: Currency = 'USD'): string {
+export function formatCurrency(value: number | undefined, currency: Currency = 'USD'): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    return '$0.00';
+  }
+  
   try {
     const config = CURRENCY_CONFIGS[currency];
     
@@ -68,7 +72,7 @@ export function formatCurrency(value: number, currency: Currency = 'USD'): strin
   } catch {
     // Fallback: simple formatting if Intl.NumberFormat fails
     const config = CURRENCY_CONFIGS[currency];
-    return `${config.symbol}${value.toFixed(config.decimals)}`;
+    return `${config.symbol}${(value ?? 0).toFixed(config.decimals)}`;
   }
 }
 
@@ -79,7 +83,11 @@ export function formatCurrency(value: number, currency: Currency = 'USD'): strin
  * @param currency - The currency code
  * @returns Formatted compact currency string
  */
-export function formatCompactCurrency(value: number, currency: Currency = 'USD'): string {
+export function formatCompactCurrency(value: number | undefined, currency: Currency = 'USD'): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    return '$0';
+  }
+  
   const config = CURRENCY_CONFIGS[currency];
   
   const absValue = Math.abs(value);
@@ -90,7 +98,7 @@ export function formatCompactCurrency(value: number, currency: Currency = 'USD')
   } else if (absValue >= 1_000) {
     formattedValue = (value / 1_000).toFixed(1) + 'K';
   } else {
-    formattedValue = value.toFixed(config.decimals);
+    formattedValue = (value ?? 0).toFixed(config.decimals);
   }
   
   return `${config.symbol}${formattedValue}`;

@@ -89,6 +89,16 @@ export function useWalletSync() {
   const syncConnectedWalletPosition = useFinanceStore((state) => state.syncConnectedWalletPosition);
   const removeConnectedWalletPosition = useFinanceStore((state) => state.removeConnectedWalletPosition);
   
+  // Store stable references to prevent dependency issues
+  const syncFunctionRef = useRef(syncConnectedWalletPosition);
+  const removeFunctionRef = useRef(removeConnectedWalletPosition);
+  
+  // Update refs when functions change (but don't trigger re-renders)
+  useEffect(() => {
+    syncFunctionRef.current = syncConnectedWalletPosition;
+    removeFunctionRef.current = removeConnectedWalletPosition;
+  }, [syncConnectedWalletPosition, removeConnectedWalletPosition]);
+  
   // 管理连接状态
   const [isConnected, setIsConnected] = useState(false);
   const [address, setAddress] = useState<string | undefined>();
@@ -143,7 +153,7 @@ export function useWalletSync() {
         const prevAddress = prevStateRef.current.address;
         const prevChainId = prevStateRef.current.chainId || 1;
         
-        removeConnectedWalletPosition(prevAddress, prevChainId);
+        removeFunctionRef.current(prevAddress, prevChainId);
         
         // 更新状态
         setIsConnected(false);
@@ -198,7 +208,7 @@ export function useWalletSync() {
         );
 
         // 同步到 Finance Store
-        await syncConnectedWalletPosition({
+        await syncFunctionRef.current({
           address,
           chainId,
           chainName,
@@ -223,7 +233,7 @@ export function useWalletSync() {
     } finally {
       syncInProgressRef.current = false;
     }
-  }, [syncConnectedWalletPosition, removeConnectedWalletPosition]);
+  }, []);
 
   // 初始化时检查一次连接状态（仅一次）
   useEffect(() => {

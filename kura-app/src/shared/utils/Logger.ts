@@ -23,6 +23,47 @@ const MIN_LOG_LEVEL = __DEV__ ? LOG_LEVEL.debug : LOG_LEVEL.warn;
 const DEDUP_MAP = new Map<string, number>();
 const DEDUP_TIMEOUT = 1000; // 1 秒內去重
 
+// 過濾掉 base64 圖片数据
+function sanitizeData(data: any): any {
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  if (typeof data === 'string') {
+    // 檢查是否為 base64 圖片
+    if (data.startsWith('data:image/') || (data.length > 1000 && /^[A-Za-z0-9+/]*={0,2}$/.test(data.substring(0, 100)))) {
+      return '[Image Base64 - hidden]';
+    }
+    return data;
+  }
+
+  if (Array.isArray(data)) {
+    return data.map(item => sanitizeData(item));
+  }
+
+  if (typeof data === 'object') {
+    const sanitized: any = {};
+    for (const key in data) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        const value = data[key];
+        // 檢查常見的 base64 圖片 key 名稱
+        if (key.toLowerCase().includes('image') || key.toLowerCase().includes('base64') || key.toLowerCase().includes('photo')) {
+          if (typeof value === 'string' && (value.startsWith('data:image/') || value.length > 1000)) {
+            sanitized[key] = '[Image Base64 - hidden]';
+          } else {
+            sanitized[key] = sanitizeData(value);
+          }
+        } else {
+          sanitized[key] = sanitizeData(value);
+        }
+      }
+    }
+    return sanitized;
+  }
+
+  return data;
+}
+
 class Logger {
   private static logs: LogEntry[] = [];
   private static maxLogs = 200;
@@ -55,12 +96,15 @@ class Logger {
       return;
     }
 
+    // 過濾掉 base64 圖片數據
+    const sanitizedData = sanitizeData(data);
+
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
       module,
       message,
-      data,
+      data: sanitizedData,
     };
 
     this.logs.push(entry);
@@ -73,8 +117,8 @@ class Logger {
     // Log to console with styling
     const prefix = `[${entry.timestamp}] [${entry.level.toUpperCase()}] [${module}]`;
     const logArgs = [prefix, message];
-    if (data !== undefined) {
-      logArgs.push(data);
+    if (sanitizedData !== undefined) {
+      logArgs.push(sanitizedData);
     }
 
     switch (level) {

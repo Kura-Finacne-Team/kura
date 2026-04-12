@@ -209,6 +209,7 @@ export const createWeb3Slice: StateCreator<FinanceState, [], [], Web3State> = (s
       holdings: nativeBalance,
       currentPrice,
       change24h,
+      usdValue: nativeBalance * currentPrice,
       type: 'crypto',
       logo:
         chainMeta?.logo ?? 'https://www.google.com/s2/favicons?domain=ethereum.org&sz=128',

@@ -1,6 +1,6 @@
 // apps/kura-app/src/features/header/components/Header.tsx
 import React, { useState, useRef, useMemo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -65,9 +65,17 @@ export default function Header() {
 
           <TouchableOpacity 
             onPress={() => setModalVisible(true)}
-            style={{ width: 40, height: 40, backgroundColor: '#8B5CF6', borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' }}
+            style={{ width: 40, height: 40, backgroundColor: '#8B5CF6', borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent', overflow: 'hidden' }}
           >
-            <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>{avatarInitial}</Text>
+            {userProfile.avatarUrl ? (
+              <Image 
+                source={{ uri: userProfile.avatarUrl }} 
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="cover"
+              />
+            ) : (
+              <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>{avatarInitial}</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

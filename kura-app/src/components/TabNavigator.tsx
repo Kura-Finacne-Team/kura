@@ -16,9 +16,9 @@ export default function TabNavigator() {
           backgroundColor: '#1A1A24',
           borderTopColor: '#1A1A24',
           borderTopWidth: 1,
-          paddingBottom: 15, // 針對 iOS Home Indicator 縮減留白
-          paddingTop: 5,
-          height: 55, // 原本 90 縮減近半
+          paddingBottom: 30, // 增加底部留白距離
+          paddingTop: 15,
+          height: 80, // 增加整體高度
         },
         tabBarActiveTintColor: '#8B5CF6',
         tabBarInactiveTintColor: '#4B5563',

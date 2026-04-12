@@ -40,7 +40,8 @@ export interface BackendFinanceInvestment {
   name: string;
   holdings: number;
   currentPrice: number;
-  change24h: number;
+  change24h: number; // 24小時價格變化百分比
+  usdValue: number; // 持倉USD價值
   type: 'crypto' | 'stock';
   logo: string;
 }

@@ -338,7 +338,7 @@ export default function ExchangeLinkModal({
                           style={{
                             width: 48,
                             height: 48,
-                            borderRadius: 12,
+                            borderRadius: 24,
                             backgroundColor: 'rgba(139, 92, 246, 0.1)',
                             justifyContent: 'center',
                             alignItems: 'center',
@@ -348,9 +348,9 @@ export default function ExchangeLinkModal({
                           {exchange.icon && exchange.icon.startsWith('http') && !failedIcons.has(exchange.id) ? (
                             <Image
                               source={{ uri: exchange.icon }}
-                              style={{ width: '100%', height: '100%' }}
+                              style={{ width: 48, height: 48, borderRadius: 24 }}
                               onError={() => handleIconLoadError(exchange.id)}
-                              resizeMode="contain"
+                              resizeMode="cover"
                             />
                           ) : (
                             <Text style={{ fontSize: 24 }}>💱</Text>

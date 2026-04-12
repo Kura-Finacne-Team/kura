@@ -38,25 +38,46 @@ export interface ExchangeBalance {
   free: number;
   used: number;
   total: number;
+  usdPrice: number;
+  change24h: number; // 24小時價格變化百分比
+  usdValue: number; // total * usdPrice
 }
 
-export interface ExchangeAsset {
+export interface ExchangeSnapshotAccount {
+  id: string;
+  exchange: ExchangeName;
+  displayName: string;
+}
+
+export interface ExchangePosition {
   symbol: string;
-  name: string;
-  amount: number;
-  price: number;
-  value: number; // amount * price in USD
-  change24h: number;
-  logo: string;
+  contractType: string; // 'linear', 'inverse', etc.
+  contracts: number;
+  contractSize: number;
+  currentPrice: number;
+  markPrice: number;
+  percentage: number;
+  maintenanceMargin: number;
+  collateral: number;
+  initialMargin: number;
+  unrealizedPnl: number;
+  realizedPnl: number;
+  leverage: number;
+  side: 'long' | 'short';
+  change24h: number; // 24小時價格變化百分比
+  usdValue: number; // 倉位USD價值
 }
 
 export interface ExchangeSnapshot {
-  exchangeAccountId: string;
-  exchange: ExchangeName;
-  balances: ExchangeBalance[];
-  assets: ExchangeAsset[];
-  totalValueUSD: number;
-  lastFetchedAt: string;
+  account: ExchangeSnapshotAccount;
+  balances: ExchangeBalance[]; // 總持倉
+  balancesUsdTotal: number; // 現貨持倉總USD價值
+  assets: ExchangeBalance[]; // 自由余額（現貨）
+  assetsUsdTotal: number; // 自由資產總USD價值
+  positions: ExchangePosition[]; // 期貨合約倉位
+  positionsUsdTotal: number; // 期貨倉位總USD價值
+  totalUsdValue: number; // 總USD價值（balances + positions）
+  timestamp: string;
 }
 
 interface ApiErrorBody {
@@ -233,7 +254,7 @@ export async function fetchExchangeBalances(
   if (!exchangeAccountId) {
     throw new ExchangeApiError('exchangeAccountId is required', 400);
   }
-  const response = await exchangeRequest<{ snapshot?: ExchangeSnapshot } | ExchangeSnapshot>(
+  const response = await exchangeRequest<ExchangeSnapshot>(
     `/${exchangeAccountId}/balances`,
     { method: 'GET' },
     token
@@ -241,56 +262,61 @@ export async function fetchExchangeBalances(
 
   // Log raw response for debugging
   Logger.debug('ExchangeAPI', 'Raw balance response', {
-    isSnapshot: !('snapshot' in response),
-    hasSnapshot: 'snapshot' in response,
-    response: JSON.stringify(response).substring(0, 300),
+    hasAccount: !!response.account,
+    balancesCount: response.balances?.length,
+    assetsCount: response.assets?.length,
+    timestamp: response.timestamp,
   });
 
-  // Handle both wrapped and direct response formats
-  let snapshot: ExchangeSnapshot;
-  if (response && 'snapshot' in response && (response as any).snapshot) {
-    snapshot = (response as any).snapshot as ExchangeSnapshot;
-  } else {
-    snapshot = response as ExchangeSnapshot;
-  }
-
   // Validate response structure before returning
-  if (!snapshot) {
-    throw new ExchangeApiError('Invalid balance response: snapshot is empty', 400);
+  if (!response) {
+    throw new ExchangeApiError('Invalid balance response: response is empty', 400);
   }
 
-  if (!Array.isArray(snapshot.balances)) {
+  if (!response.account) {
+    throw new ExchangeApiError('Invalid balance response: missing account information', 400);
+  }
+
+  if (!Array.isArray(response.balances)) {
     Logger.warn('ExchangeAPI', 'Balance response missing balances array', {
       exchangeAccountId,
-      hasBalances: !!snapshot.balances,
-      balancesType: typeof snapshot.balances,
+      hasBalances: !!response.balances,
+      balancesType: typeof response.balances,
     });
     // Return with empty balances array to prevent crashes
     return {
-      ...snapshot,
+      ...response,
       balances: [],
     };
   }
 
-  return snapshot;
-}
-
-/**
- * Fetch assets/holdings from a connected exchange account
- */
-export async function fetchExchangeAssets(
-  exchangeAccountId: string,
-  token: string
-): Promise<ExchangeAsset[]> {
-  if (!exchangeAccountId) {
-    throw new ExchangeApiError('exchangeAccountId is required', 400);
+  if (!Array.isArray(response.assets)) {
+    Logger.warn('ExchangeAPI', 'Balance response missing assets array', {
+      exchangeAccountId,
+      hasAssets: !!response.assets,
+      assetsType: typeof response.assets,
+    });
+    // Return with empty assets array to prevent crashes
+    return {
+      ...response,
+      assets: [],
+    };
   }
-  const response = await exchangeRequest<{ assets: ExchangeAsset[] }>(
-    `/${exchangeAccountId}/assets`,
-    { method: 'GET' },
-    token
-  );
-  return response.assets || [];
+
+  if (!Array.isArray(response.positions)) {
+    Logger.warn('ExchangeAPI', 'Balance response missing positions array', {
+      exchangeAccountId,
+      hasPositions: !!response.positions,
+      positionsType: typeof response.positions,
+    });
+    // Return with empty positions array to prevent crashes
+    return {
+      ...response,
+      positions: [],
+    };
+  }
+
+  return response;
 }
 
 /**

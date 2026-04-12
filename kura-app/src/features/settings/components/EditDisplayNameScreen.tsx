@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../../../shared/store/useAppStore';
 
@@ -9,12 +9,32 @@ interface EditDisplayNameScreenProps {
 
 export default function EditDisplayNameScreen({ onClose }: EditDisplayNameScreenProps) {
   const userProfile = useAppStore((state) => state.userProfile);
-  const [displayName, setDisplayName] = useState(userProfile.displayName);
+  const setDisplayName = useAppStore((state) => state.setDisplayName);
+  const [displayName, setDisplayNameLocal] = useState(userProfile.displayName);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSave = () => {
-    // 这里可以调用 mutation 来保存
-    console.log('Save display name:', displayName);
-    onClose();
+  const handleSave = async () => {
+    if (!displayName.trim()) {
+      Alert.alert('Error', 'Display name cannot be empty');
+      return;
+    }
+
+    if (displayName === userProfile.displayName) {
+      onClose();
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await setDisplayName(displayName);
+      Alert.alert('Success', 'Display name updated successfully');
+      onClose();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update display name';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -33,18 +53,23 @@ export default function EditDisplayNameScreen({ onClose }: EditDisplayNameScreen
         
         <TextInput
           value={displayName}
-          onChangeText={setDisplayName}
+          onChangeText={setDisplayNameLocal}
           placeholder="Enter your display name"
           placeholderTextColor="#666666"
-          style={{ backgroundColor: '#1A1A24', borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.2)', borderRadius: 12, color: '#FFFFFF', padding: 16, fontSize: 16, marginBottom: 32 }}
+          editable={!isLoading}
+          style={{ backgroundColor: '#1A1A24', borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.2)', borderRadius: 12, color: '#FFFFFF', padding: 16, fontSize: 16, marginBottom: 32, opacity: isLoading ? 0.5 : 1 }}
         />
 
         {/* Save Button */}
         <TouchableOpacity
           onPress={handleSave}
-          style={{ width: '100%', paddingVertical: 16, borderRadius: 12, backgroundColor: '#8B5CF6', alignItems: 'center', justifyContent: 'center' }}
+          disabled={isLoading || displayName.trim() === ''}
+          style={{ width: '100%', paddingVertical: 16, borderRadius: 12, backgroundColor: isLoading || displayName.trim() === '' ? '#6B5AA6' : '#8B5CF6', alignItems: 'center', justifyContent: 'center', flexDirection: 'row' }}
         >
-          <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Save Changes</Text>
+          {isLoading && <ActivityIndicator color="#FFFFFF" style={{ marginRight: 8 }} />}
+          <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>
+            {isLoading ? 'Saving...' : 'Save Changes'}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

@@ -7,7 +7,10 @@ interface PerformanceSummaryProps {
   timeRange?: '1M' | '3M' | '6M' | '1Y' | 'All';
 }
 
-function formatPercentage(value: number) {
+function formatPercentage(value: number | undefined): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    return '+0.00%';
+  }
   const sign = value >= 0 ? '+' : '';
   return `${sign}${value.toFixed(2)}%`;
 }

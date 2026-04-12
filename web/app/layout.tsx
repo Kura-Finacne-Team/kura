@@ -8,10 +8,48 @@ import Web3ModalProvider from '@/context/Web3ModalProvider';
 export const metadata: Metadata = {
   title: "Kura | Your Financial Nexus",
   description: "Track your cross-border fiat and web3 assets.",
+  keywords: ["finance", "web3", "crypto", "assets", "dashboard"],
+  authors: [{ name: "Kura" }],
+  manifest: "/manifest.json",
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png',
+    icon: [
+      { url: '/ios/AppIcon.appiconset/icon-1024.png', sizes: '1024x1024', type: 'image/png' },
+      { url: '/favicon.ico', sizes: '32x32' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: [
+      { url: '/ios/AppIcon.appiconset/icon-60@3x.png', sizes: '180x180', type: 'image/png' },
+      { url: '/ios/AppIcon.appiconset/icon-60@2x.png', sizes: '120x120', type: 'image/png' },
+    ],
+    other: [
+      {
+        rel: 'icon',
+        url: '/android/mipmap-xxxhdpi/ic_launcher.png',
+        sizes: 'any',
+        type: 'image/png',
+      },
+    ],
+  },
+  openGraph: {
+    title: "Kura | Your Financial Nexus",
+    description: "Track your cross-border fiat and web3 assets.",
+    url: "https://app.kura.com",
+    siteName: "Kura",
+    images: [
+      {
+        url: '/ios/AppIcon.appiconset/icon-1024.png',
+        width: 1024,
+        height: 1024,
+        alt: 'Kura Icon',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Kura | Your Financial Nexus",
+    description: "Track your cross-border fiat and web3 assets.",
+    images: '/ios/AppIcon.appiconset/icon-1024.png',
   },
 };
 
@@ -23,6 +61,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Viewport & Mobile */}
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Kura" />
+        <meta name="theme-color" content="#8B5CF6" />
+
         {/* Allow Plaid CDN in CSP */}
         <meta
           httpEquiv="Content-Security-Policy"
