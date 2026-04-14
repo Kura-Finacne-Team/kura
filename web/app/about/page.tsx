@@ -4,7 +4,6 @@ import React from 'react';
 import Link from 'next/link';
 import { FiArrowLeft } from 'react-icons/fi';
 import { motion } from 'framer-motion';
-import TopNav from '@/components/TopNav';
 
 export default function AboutPage() {
   const containerVariants = {
@@ -31,9 +30,6 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-[#0B0B0F] text-white flex flex-col">
-      {/* TopNav */}
-      <TopNav />
-
       {/* Breadcrumb / Back button */}
       <div className="px-6 py-3 border-b border-[#1A1A24] bg-[#0B0B0F]/50">
         <Link
@@ -47,7 +43,7 @@ export default function AboutPage() {
 
       {/* Main content - centered */}
       <motion.main
-        className="flex-1 flex items-center justify-center px-6 py-16"
+        className="flex-1 flex items-center justify-center px-6 py-16 overflow-y-auto"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
