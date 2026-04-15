@@ -153,17 +153,22 @@ export const useExchangeStore = create<ExchangeStoreState>((set, get) => ({
     try {
       Logger.debug('ExchangeStore', 'Hydrating exchange accounts from backend');
 
-      const accounts = await getConnectedExchangeAccounts(token);
+      const response = await getConnectedExchangeAccounts(token);
+
+      // Extract accounts from response (new format includes metadata)
+      const accounts = response.accounts || [];
+      const metadata = response.metadata;
 
       Logger.debug('ExchangeStore', 'Exchange accounts response received', {
-        isArray: Array.isArray(accounts),
-        type: typeof accounts,
-        count: Array.isArray(accounts) ? accounts.length : 'N/A',
+        accountsCount: accounts.length,
+        metadataTimestamp: metadata?.timestamp,
+        metadataCount: metadata?.count,
       });
 
       if (!Array.isArray(accounts)) {
-        Logger.warn('ExchangeStore', 'Exchange accounts response is not an array', {
-          received: accounts,
+        Logger.warn('ExchangeStore', 'Exchange accounts array is invalid', {
+          isArray: Array.isArray(accounts),
+          type: typeof accounts,
         });
         return;
       }
@@ -171,6 +176,13 @@ export const useExchangeStore = create<ExchangeStoreState>((set, get) => ({
       Logger.info('ExchangeStore', 'Exchange accounts hydrated', {
         count: accounts.length,
         exchanges: accounts.map((a) => a.exchange).join(', '),
+        fetchedAt: metadata?.timestamp,
+        accountDetails: accounts.map((a) => ({
+          exchange: a.exchange,
+          displayName: a.exchangeDisplayName,
+          isVerified: a.isVerified,
+          isActive: a.isActive,
+        })),
       });
 
       set({ exchangeAccounts: accounts });

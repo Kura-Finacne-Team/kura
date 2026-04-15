@@ -30,7 +30,6 @@ export default function ForgotPasswordScreen({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showResetPasswordWithToken, setShowResetPasswordWithToken] = useState(false);
-  const [resetToken, setResetToken] = useState('');
 
   const requestPasswordReset = useAppStore((state) => state.requestPasswordReset);
 
@@ -67,10 +66,11 @@ export default function ForgotPasswordScreen({
   };
 
 
+
+
   if (showResetPasswordWithToken) {
     return (
       <ResetPasswordWithTokenScreen
-        initialToken={resetToken}
         onNavigateToLogin={onNavigateToLogin}
         onBack={() => setShowResetPasswordWithToken(false)}
       />
@@ -263,6 +263,7 @@ export default function ForgotPasswordScreen({
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     editable={!isLoading}
+                    autoCapitalize="none"
                     style={{
                       flex: 1,
                       color: '#FFFFFF',

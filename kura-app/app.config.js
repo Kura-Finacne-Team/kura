@@ -97,10 +97,7 @@ module.exports = {
         "development_project_id",
       backendUrl:
         process.env.EXPO_PUBLIC_BACKEND_URL ||
-        "https://localhost:8080",
-      backendUrlDev:
-        process.env.EXPO_PUBLIC_BACKEND_URL_DEV ||
-        undefined,
+        "https://api.kura-finance.com",
       environment: process.env.APP_ENV || process.env.NODE_ENV || "development",
     },
   },

@@ -348,31 +348,56 @@ export async function fetchExchangeBalances(
 
 /**
  * List all connected exchange accounts for the user
+ * 
+ * Response format from backend:
+ * {
+ *   "accounts": [ExchangeAccount[], ...],
+ *   "metadata": {
+ *     "timestamp": "2026-04-15T12:00:00Z",
+ *     "count": 2
+ *   }
+ * }
  */
 export async function getConnectedExchangeAccounts(
   token: string
-): Promise<ExchangeAccount[]> {
-  const response = await exchangeRequest<{ accounts?: ExchangeAccount[] } | ExchangeAccount[]>(
+): Promise<ExchangeAccountResponse> {
+  const response = await exchangeRequest<ExchangeAccountResponse>(
     '/accounts',
     { method: 'GET' },
     token
   );
 
-  // Handle both wrapped and direct response formats
-  if (response && 'accounts' in response && Array.isArray((response as any).accounts)) {
-    return (response as any).accounts as ExchangeAccount[];
-  }
-
-  // If it's already an array, return it
-  if (Array.isArray(response)) {
-    return response as ExchangeAccount[];
-  }
-
-  // Fallback to empty array if response is invalid
-  Logger.warn('ExchangeAPI', 'Invalid exchange accounts response format', {
-    response: JSON.stringify(response).substring(0, 200),
+  // Log the response for debugging
+  Logger.debug('ExchangeAPI', 'Connected exchange accounts response', {
+    hasAccounts: !!response?.accounts,
+    accountsCount: response?.accounts?.length,
+    hasMetadata: !!response?.metadata,
+    timestamp: response?.metadata?.timestamp,
   });
-  return [];
+
+  // Validate response structure
+  if (!response || !Array.isArray(response.accounts)) {
+    Logger.warn('ExchangeAPI', 'Invalid exchange accounts response format', {
+      hasAccounts: !!response?.accounts,
+      isArray: Array.isArray(response?.accounts),
+    });
+    // Return empty response structure
+    return {
+      accounts: [],
+      metadata: {
+        timestamp: new Date().toISOString(),
+        count: 0,
+      },
+    };
+  }
+
+  Logger.info('ExchangeAPI', 'Exchange accounts fetched successfully', {
+    count: response.accounts.length,
+    exchanges: response.accounts.map((a) => a.exchange).join(', '),
+    fetchedAt: response.metadata?.timestamp,
+  });
+
+  return response;
 }
 
 /**

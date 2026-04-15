@@ -3,6 +3,9 @@ import {
   setStoredAuthToken,
   clearStoredAuthToken,
   getStoredAuthToken,
+  getStoredPreferences,
+  setStoredPreferences,
+  clearStoredPreferences,
   fetchCurrentUserProfile,
   updateAvatar as updateAvatarApi,
   updateDisplayName as updateDisplayNameApi,
@@ -21,6 +24,7 @@ import {
   createPlaidLinkToken,
   exchangePlaidPublicToken,
   disconnectPlaidAccount as disconnectPlaidAccountApi,
+  disconnectInvestmentAccountApi,
 } from '../api/plaidApi';
 import { disconnectExchangeAccount as disconnectExchangeAccountApi } from '../api/exchangeApi';
 import { fetchExchangeRates, isCacheValid, type ExchangeRates } from '../api/exchangeRateApi';
@@ -92,6 +96,7 @@ interface AppState {
   updateAvatar: (avatarUrl: string) => Promise<void>;
   setBaseCurrency: (currency: BaseCurrency) => void;
   setLanguage: (language: Language) => void;
+  persistPreferences: () => Promise<void>;
   toggleWeeklyAiSummary: () => void;
   addChatMessage: (message: AppChatMessage) => void;
   setPlaidLinkToken: (token: string | null) => void;
@@ -106,6 +111,7 @@ interface AppState {
   requestPlaidLinkToken: () => Promise<string | null>;
   confirmPlaidExchange: (publicToken: string, institutionName?: string) => Promise<void>;
   disconnectPlaidAccount: (accountId: string) => Promise<void>;
+  disconnectInvestmentAccount: (investmentAccountId: string) => Promise<void>;
   
   // Exchange methods
   disconnectExchangeAccount: (exchangeAccountId: string) => Promise<void>;
@@ -146,6 +152,15 @@ export const useAppStore = create<AppState>((set, get) => ({
       await setStoredAuthToken(response.token);
 
       Logger.info('AppStore', 'Login successful', { email: normalizedEmail });
+      
+      // Load saved preferences if available, otherwise use defaults
+      const savedPreferences = await getStoredPreferences();
+      const preferences = {
+        baseCurrency: (savedPreferences?.baseCurrency || 'USD') as BaseCurrency,
+        language: (savedPreferences?.language || 'en') as Language,
+        weeklyAiSummary: savedPreferences?.weeklyAiSummary ?? false,
+      };
+      
       set({
         authToken: response.token,
         authStatus: 'authenticated',
@@ -156,12 +171,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           membershipLabel: response.user.membershipLabel || '',
         },
         authError: null,
-        preferences: {
-          baseCurrency: 'USD',
-          language: 'en',
-
-          weeklyAiSummary: false,
-        },
+        preferences,
         aiInsights: [],
       });
 
@@ -198,6 +208,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       Logger.info('AppStore', 'Logging out');
       await clearStoredAuthToken();
+      await clearStoredPreferences();
       
       // Clear all finance store data
       useFinanceStore.getState().clearPlaidFinanceData();
@@ -326,6 +337,15 @@ export const useAppStore = create<AppState>((set, get) => ({
       await setStoredAuthToken(response.token);
 
       Logger.info('AppStore', 'Registration verified successfully');
+      
+      // Load saved preferences if available, otherwise use defaults
+      const savedPreferences = await getStoredPreferences();
+      const preferences = {
+        baseCurrency: (savedPreferences?.baseCurrency || 'USD') as BaseCurrency,
+        language: (savedPreferences?.language || 'en') as Language,
+        weeklyAiSummary: savedPreferences?.weeklyAiSummary ?? false,
+      };
+      
       set({
         authToken: response.token,
         authStatus: 'authenticated',
@@ -336,11 +356,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           membershipLabel: response.user.membershipLabel || '',
         },
         authError: null,
-        preferences: {
-          baseCurrency: 'USD',
-          language: 'en',
-          weeklyAiSummary: false,
-        },
+        preferences,
         aiInsights: [],
       });
 
@@ -406,6 +422,20 @@ export const useAppStore = create<AppState>((set, get) => ({
       const response = await Promise.race([profilePromise, profileTimeout]);
 
       Logger.info('AppStore', 'Profile fetched successfully');
+      
+      // Load saved preferences if available, otherwise use defaults
+      const savedPreferences = await getStoredPreferences();
+      const preferences = {
+        baseCurrency: (savedPreferences?.baseCurrency || 'USD') as BaseCurrency,
+        language: (savedPreferences?.language || 'en') as Language,
+        weeklyAiSummary: savedPreferences?.weeklyAiSummary ?? false,
+      };
+      
+      Logger.debug('AppStore', 'Loaded preferences from storage', {
+        language: preferences.language,
+        baseCurrency: preferences.baseCurrency,
+      });
+      
       set({
         authToken: storedToken,
         authStatus: 'authenticated',
@@ -416,11 +446,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           membershipLabel: response.user.membershipLabel || '',
         },
         authError: null,
-        preferences: {
-          baseCurrency: 'USD',
-          language: 'en',
-          weeklyAiSummary: false,
-        },
+        preferences,
         aiInsights: [],
       });
 
@@ -454,7 +480,11 @@ export const useAppStore = create<AppState>((set, get) => ({
         Logger.warn('AppStore', 'Failed to hydrate exchange accounts', exchangeError);
       }
     } catch (error) {
-      Logger.warn('AppStore', 'Failed to hydrate from storage', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown hydration error';
+      Logger.warn('AppStore', 'Failed to hydrate from storage', { 
+        error: errorMessage,
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+      });
       await clearStoredAuthToken();
       set({ authStatus: 'unauthenticated', authToken: null });
     }
@@ -590,7 +620,21 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
   setBaseCurrency: (baseCurrency) => set((state) => ({ preferences: { ...state.preferences, baseCurrency } })),
-  setLanguage: (language) => set((state) => ({ preferences: { ...state.preferences, language } })),
+  setLanguage: (language) => {
+    // Update state
+    set((state) => ({ preferences: { ...state.preferences, language } }));
+    // Persist to storage
+    get().persistPreferences();
+  },
+  persistPreferences: async () => {
+    const state = get();
+    try {
+      await setStoredPreferences(state.preferences);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      Logger.error('AppStore', 'Failed to persist preferences', { error: errorMessage });
+    }
+  },
   toggleWeeklyAiSummary: () =>
     set((state) => ({
       preferences: {
@@ -760,7 +804,21 @@ export const useAppStore = create<AppState>((set, get) => ({
       Logger.debug('AppStore', 'Disconnecting Plaid account', { accountId });
 
       const result = await disconnectPlaidAccountApi(authToken, accountId);
-      Logger.info('AppStore', 'Plaid account disconnected successfully', { result });
+      
+      // Log detailed response from backend
+      const logData: any = {
+        status: result.status,
+        message: result.message,
+      };
+      
+      // Include data fields if they exist
+      if (result.data) {
+        logData.accountId = result.data.accountId;
+        logData.institution = result.data.institution;
+        logData.plaidRequestId = result.data.plaidRequestId;
+      }
+      
+      Logger.info('AppStore', 'Plaid account disconnected successfully', logData);
 
       // Update local state to remove the account
       const disconnectBankingAccount = useFinanceStore.getState().disconnectBankingAccount;
@@ -773,10 +831,67 @@ export const useAppStore = create<AppState>((set, get) => ({
       const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
       await hydratePlaidFinanceData(authToken);
 
-      Logger.info('AppStore', 'Finance data reloaded after Plaid account disconnect');
+      Logger.info('AppStore', 'Finance data reloaded after Plaid account disconnect', {
+        accountId,
+        institution: result.data?.institution,
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to disconnect Plaid account';
-      Logger.error('AppStore', 'Failed to disconnect Plaid account', { error: errorMessage });
+      Logger.error('AppStore', 'Failed to disconnect Plaid account', { 
+        error: errorMessage,
+        accountId,
+      });
+      throw error;
+    }
+  },
+
+  disconnectInvestmentAccount: async (investmentAccountId: string) => {
+    try {
+      const authToken = get().authToken;
+      if (!authToken) {
+        throw new Error('Not authenticated');
+      }
+
+      Logger.debug('AppStore', 'Disconnecting investment account', { investmentAccountId });
+
+      const result = await disconnectInvestmentAccountApi(authToken, investmentAccountId);
+      
+      // Log detailed response from backend
+      const logData: any = {
+        status: result.status,
+        message: result.message,
+      };
+      
+      // Include data fields if they exist
+      if (result.data) {
+        logData.accountId = result.data.accountId;
+        logData.institution = result.data.institution;
+        logData.plaidRequestId = result.data.plaidRequestId;
+      }
+      
+      Logger.info('AppStore', 'Investment account disconnected successfully', logData);
+
+      // Update local state to remove the account
+      const disconnectInvestmentAccountLocal = useFinanceStore.getState().disconnectInvestmentAccount;
+      disconnectInvestmentAccountLocal(investmentAccountId);
+
+      // Wait for webhook to complete after disconnect
+      await waitForWebhookCompletion('disconnect');
+
+      // Reload the updated finance data
+      const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
+      await hydratePlaidFinanceData(authToken);
+
+      Logger.info('AppStore', 'Finance data reloaded after investment account disconnect', {
+        investmentAccountId,
+        institution: result.data?.institution,
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to disconnect investment account';
+      Logger.error('AppStore', 'Failed to disconnect investment account', { 
+        error: errorMessage,
+        investmentAccountId,
+      });
       throw error;
     }
   },

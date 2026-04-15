@@ -47,32 +47,20 @@ export class AuthApiError extends Error {
 
 export const getBackendBaseUrl = (): string => {
   // Priority:
-  // 1. Explicit config from app.config.js
+  // 1. Explicit config from app.config.js (EXPO_PUBLIC_BACKEND_URL)
   // 2. Environment variable EXPO_PUBLIC_BACKEND_URL
-  // 3. Environment variable EXPO_PUBLIC_BACKEND_URL_DEV (for development fallback)
-  // 4. Default
+  // 3. Default
 
-  let url =
+  const url =
     Constants.expoConfig?.extra?.backendUrl ||
     process.env.EXPO_PUBLIC_BACKEND_URL ||
     DEFAULT_BACKEND_URL;
 
-  // In development, if using HTTPS with self-signed cert, try to use HTTP fallback
-  if (IS_DEV && url.startsWith('https://')) {
-    const devHttpUrl = process.env.EXPO_PUBLIC_BACKEND_URL_DEV;
-    if (devHttpUrl) {
-      Logger.warn('AuthAPI', 'Using dev HTTP URL for self-signed certificate', {
-        production: url,
-        development: devHttpUrl,
-      });
-      return devHttpUrl;
-    }
-    // Log the HTTPS URL being used - it will fail if cert is self-signed
-    Logger.debug('AuthAPI', 'Using HTTPS URL (may fail with self-signed certs)', {
-      url,
-      tip: 'Set EXPO_PUBLIC_BACKEND_URL_DEV=http://localhost:8080 to use HTTP in development',
-    });
-  }
+  Logger.debug('AuthAPI', 'Backend URL configured', {
+    url,
+    environment: IS_DEV ? 'development' : 'production',
+    source: Constants.expoConfig?.extra?.backendUrl ? 'app.config.js' : 'environment variable',
+  });
 
   return url;
 };
@@ -465,4 +453,100 @@ export const deleteAccount = (
     method: 'DELETE',
     body: JSON.stringify({ password }),
   }, token);
+};
+
+// Preferences storage keys
+const PREFERENCES_KEY = 'kura.user.preferences';
+
+export interface StoredPreferences {
+  baseCurrency?: string;
+  language?: string;
+  weeklyAiSummary?: boolean;
+}
+
+/**
+ * 从存储中获取用户偏好设置
+ */
+export const getStoredPreferences = async (): Promise<StoredPreferences | null> => {
+  try {
+    const preferences = await AsyncStorage.getItem(PREFERENCES_KEY);
+    if (preferences) {
+      const parsed = JSON.parse(preferences);
+      Logger.debug('AuthAPI', '✅ User preferences retrieved from AsyncStorage', {
+        language: parsed.language,
+        baseCurrency: parsed.baseCurrency,
+      });
+      return parsed;
+    } else {
+      Logger.debug('AuthAPI', '⚪ No user preferences found in AsyncStorage');
+    }
+    return null;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    Logger.error('AuthAPI', '❌ Failed to get stored preferences', {
+      error: errorMessage,
+      errorType: error instanceof Error ? error.name : typeof error,
+    });
+    // Return null on error, will use defaults
+    return null;
+  }
+};
+
+/**
+ * 保存用户偏好设置到存储
+ */
+export const setStoredPreferences = async (preferences: StoredPreferences): Promise<void> => {
+  try {
+    // Validate preferences
+    if (!preferences || typeof preferences !== 'object') {
+      throw new Error('Invalid preferences: must be an object');
+    }
+
+    const preferencesString = JSON.stringify(preferences);
+    await AsyncStorage.setItem(PREFERENCES_KEY, preferencesString);
+    Logger.info('AuthAPI', '✅ User preferences saved to AsyncStorage successfully', {
+      language: preferences.language,
+      baseCurrency: preferences.baseCurrency,
+      weeklyAiSummary: preferences.weeklyAiSummary,
+    });
+
+    // Also keep in-memory backup
+    memoryStorage[PREFERENCES_KEY] = preferencesString;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    Logger.error('AuthAPI', '❌ Failed to set stored preferences', {
+      error: errorMessage,
+      errorType: error instanceof Error ? error.name : typeof error,
+    });
+
+    // Try in-memory fallback
+    try {
+      memoryStorage[PREFERENCES_KEY] = JSON.stringify(preferences);
+      Logger.warn('AuthAPI', '⚠️ Preferences saved to in-memory storage only (will be lost on app restart)');
+    } catch (memoryError) {
+      Logger.error('AuthAPI', '❌ Failed to save preferences anywhere', {
+        error: memoryError instanceof Error ? memoryError.message : String(memoryError),
+      });
+      throw new Error('Failed to persist user preferences');
+    }
+  }
+};
+
+/**
+ * 清除所有用户偏好设置
+ */
+export const clearStoredPreferences = async (): Promise<void> => {
+  try {
+    await AsyncStorage.removeItem(PREFERENCES_KEY);
+    Logger.info('AuthAPI', '✅ User preferences cleared from AsyncStorage');
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    Logger.warn('AuthAPI', '⚠️ AsyncStorage removeItem for preferences failed', {
+      error: errorMessage,
+    });
+  } finally {
+    // Always clear in-memory storage
+    delete memoryStorage[PREFERENCES_KEY];
+    Logger.debug('AuthAPI', 'In-memory preferences cleared');
+  }
 };

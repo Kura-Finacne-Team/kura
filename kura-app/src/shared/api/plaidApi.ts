@@ -67,6 +67,18 @@ export interface UpdatePlaidAccountOrderPayload {
   investmentAccountIds?: string[];
 }
 
+export interface DisconnectAccountData {
+  accountId: string;
+  institution: string;
+  plaidRequestId?: string;
+}
+
+export interface DisconnectAccountResponse {
+  status: string;
+  message: string;
+  data?: DisconnectAccountData;
+}
+
 interface ApiErrorBody {
   error?: string;
   message?: string;
@@ -182,17 +194,36 @@ export const fetchPlaidFinanceSnapshot = (token: string, refresh: boolean = fals
 };
 
 /**
- * 断开 Plaid 银行账户连接 (Checking/Savings/Credit)
+ * 断开 Plaid 银行账户连接 (Checking/Savings/Credit) 或投资账户 (Broker/Exchange/Web3)
+ * 使用同一个后端 endpoint, 后端根据 accountId 类型自动判断
  */
 export const disconnectPlaidAccount = (
   token: string,
   accountId: string
-): Promise<{ status: string; message: string }> => {
-  return plaidRequest<{ status: string; message: string }>(
+): Promise<DisconnectAccountResponse> => {
+  return plaidRequest<DisconnectAccountResponse>(
     '/api/plaid/disconnect',
     {
       method: 'POST',
       body: JSON.stringify({ accountId }),
+    },
+    token
+  );
+};
+
+/**
+ * 断开 Plaid 投资账户连接 (Broker/Exchange/Web3 Wallet)
+ * 使用同一个后端 endpoint
+ */
+export const disconnectInvestmentAccountApi = (
+  token: string,
+  investmentAccountId: string
+): Promise<DisconnectAccountResponse> => {
+  return plaidRequest<DisconnectAccountResponse>(
+    '/api/plaid/disconnect',
+    {
+      method: 'POST',
+      body: JSON.stringify({ accountId: investmentAccountId }),
     },
     token
   );

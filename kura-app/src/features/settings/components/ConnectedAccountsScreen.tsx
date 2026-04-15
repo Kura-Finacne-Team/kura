@@ -50,8 +50,8 @@ export default function ConnectedAccountsScreen({ onClose }: ConnectedAccountsSc
   const exchangeAccounts = useFinanceStore((state) => state.exchangeAccounts);
   const plaidLinkToken = useAppStore((state: any) => state.plaidLinkToken);
   const disconnectPlaidAccount = useAppStore((state) => state.disconnectPlaidAccount);
+  const disconnectInvestmentAccount = useAppStore((state) => state.disconnectInvestmentAccount);
   const disconnectExchangeAccount = useAppStore((state) => state.disconnectExchangeAccount);
-  const disconnectInvestmentAccount = useFinanceStore((state) => state.disconnectInvestmentAccount);
 
   const handleDisconnect = (accountId: string, category: 'Banking' | 'Investment' | 'Exchange', name: string) => {
     Alert.alert(
@@ -82,7 +82,7 @@ export default function ConnectedAccountsScreen({ onClose }: ConnectedAccountsSc
       if (category === 'Banking') {
         await disconnectPlaidAccount(accountId);
       } else if (category === 'Investment') {
-        disconnectInvestmentAccount(accountId);
+        await disconnectInvestmentAccount(accountId);
       } else if (category === 'Exchange') {
         await disconnectExchangeAccount(accountId);
       }
