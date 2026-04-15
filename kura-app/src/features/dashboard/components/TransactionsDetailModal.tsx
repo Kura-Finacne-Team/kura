@@ -153,7 +153,7 @@ export default function TransactionsDetailModal({
           <View style={{ gap: 12 }}>
             {transactions.length > 0 ? (
               transactions.map((transaction) => {
-                const isExpense = transaction.type === 'credit' || transaction.type === 'transfer';
+                const isExpense = Number(transaction.amount) < 0;
 
                 return (
                   <View 

@@ -34,7 +34,7 @@ export default function ActivityContainer({
         >
           <View style={{ gap: 12 }}>
             {transactions.slice(0, 4).map((transaction) => {
-              const isExpense = transaction.type === 'credit' || transaction.type === 'transfer';
+              const isExpense = Number(transaction.amount) < 0;
 
               return (
                 <View key={transaction.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 0 }}>
