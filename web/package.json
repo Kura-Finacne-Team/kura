@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --experimental-https --experimental-https-key ./certificates/localhost-key.pem --experimental-https-cert ./certificates/localhost.pem",
+    "dev": "next dev",
     "cert:gen": "bash ./scripts/generate-local-cert.sh",
     "build": "next build",
     "build:prod": "NODE_ENV=production next build",

@@ -51,18 +51,30 @@ export const getBackendBaseUrl = (): string => {
 };
 
 export const getStoredAuthToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  return window.localStorage.getItem(AUTH_TOKEN_KEY);
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    return window.localStorage.getItem(AUTH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
 };
 
 export const setStoredAuthToken = (token: string): void => {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+  } catch {
+    // Silently fail if localStorage is not available
+  }
 };
 
 export const clearStoredAuthToken = (): void => {
-  if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  } catch {
+    // Silently fail if localStorage is not available
+  }
 };
 
 async function apiRequest<T>(

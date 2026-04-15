@@ -11,7 +11,8 @@ import AppSessionHydrator from '@/components/AppSessionHydrator'
 // 1. 設定 React Query
 const queryClient = new QueryClient()
 
-const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
+// Reown (formerly WalletConnect) Project ID
+const reownProjectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
 
 // Get the actual URL from the browser at runtime (client-side only)
 const getWalletMetadataUrl = () => {
@@ -27,16 +28,16 @@ const getWalletMetadataUrl = () => {
 }
 
 const createWagmiConfig = () => {
-  const connectors = walletConnectProjectId
+  const connectors = reownProjectId
     ? [
         walletConnect({
-          projectId: walletConnectProjectId,
+          projectId: reownProjectId,
           showQrModal: true,
           metadata: {
             name: 'Kura',
             description: 'Kura wallet connection',
             url: getWalletMetadataUrl(),
-            icons: ['https://walletconnect.com/walletconnect-logo.png'],
+            icons: ['https://reown.com/logo.png'],
           },
         }),
         injected(),

@@ -15,9 +15,9 @@ export function middleware(request: NextRequest) {
     'https://*.plaid.com',
     'https://*.coingecko.com',
     'https://api.coingecko.com',
-    'wss://relay.walletconnect.org',
-    'wss://*.walletconnect.org',
-    'https://api.web3modal.org',
+    'wss://relay.reown.com',
+    'wss://*.reown.com',
+    'https://api.reown.org',
     'https://static.cloudflareinsights.com', // Cloudflare Insights
     'https://kura.dpdns.org', // Explicit self-domain for reverse proxy
   ].filter(Boolean).join(' ');
@@ -37,7 +37,7 @@ export function middleware(request: NextRequest) {
       img-src 'self' data: https: blob:;
       font-src 'self' data: https:;
       style-src 'self' 'unsafe-inline';
-      frame-src 'self' https://cdn.plaid.com https://*.plaid.com wss://relay.walletconnect.org wss://*.walletconnect.org;
+      frame-src 'self' https://cdn.plaid.com https://*.plaid.com wss://relay.reown.com wss://*.reown.com;
     `.replace(/\s+/g, ' ').trim()
   );
 

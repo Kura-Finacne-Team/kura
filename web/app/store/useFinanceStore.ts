@@ -320,7 +320,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       id: accountId,
       name: `${chainName} Wallet`,
       type: 'Web3 Wallet',
-      logo: 'https://www.google.com/s2/favicons?domain=walletconnect.com&sz=128',
+      logo: 'https://www.google.com/s2/favicons?domain=reown.com&sz=128',
     };
 
     const walletAsset: Investment = {

@@ -334,6 +334,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       console.debug('[AppStore] Hydrating from storage');
       set({ authStatus: 'loading' });
 
+      // Only run on client-side
+      if (typeof window === 'undefined') {
+        set({ authStatus: 'unauthenticated', authError: null });
+        return;
+      }
+
       const storedToken = getStoredAuthToken();
       if (!storedToken) {
         console.info('[AppStore] No stored token found');

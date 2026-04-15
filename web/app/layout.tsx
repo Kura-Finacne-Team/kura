@@ -6,6 +6,7 @@ import TopNav from "./components/TopNav";
 import Web3ModalProvider from '@/context/Web3ModalProvider';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('http://localhost:3000'),
   title: "Kura | One app to manage your all financial from tradfi to crypto.",
   description: "Kura | One app to manage your all financial from tradfi to crypto.",
   keywords: ["finance", "web3", "crypto", "assets", "dashboard"],
@@ -72,7 +73,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className="h-screen bg-[#0B0B0F] text-white flex flex-col overflow-hidden antialiased selection:bg-[#8B5CF6]/30">
+      <body className="min-h-screen bg-[#0B0B0F] text-white flex flex-col antialiased selection:bg-[#8B5CF6]/30">
         
         {/* 💡 用 Provider 包住整個應用程式，確保 Navbar 也能讀取錢包狀態 */}
         <Web3ModalProvider>
