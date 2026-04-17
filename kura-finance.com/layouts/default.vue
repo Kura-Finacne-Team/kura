@@ -1,12 +1,3 @@
-<template>
-  <div>
-    <Header />
-    <slot />
-    <Footer />
-  </div>
-</template>
+# Nuxt Layout
 
-<script setup lang="ts">
-import Header from '~/components/Header.vue'
-import Footer from '~/components/Footer.vue'
-</script>
+This layout file is used for all pages in the Nuxt app by default.

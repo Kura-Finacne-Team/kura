@@ -53,8 +53,8 @@ jobs:
             --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }} \
             --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }} \
             --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }} \
-            -f ./web/Dockerfile \
-            ./web
+            -f ./app.kura-finance.com/Dockerfile \
+            ./app.kura-finance.com
 
       - name: Push to Google Container Registry
         run: |
