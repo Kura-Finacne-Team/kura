@@ -555,7 +555,6 @@
         </a>
       </div>
     </section>
-  </div>
 </template>
 
 <script setup lang="ts">
