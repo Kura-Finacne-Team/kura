@@ -43,7 +43,7 @@ export default function DashboardPage() {
   }, [assetHistory]);
 
   return (
-    <div className="w-full pb-10 px-6 pt-6 max-w-full">
+    <div className="w-full pb-10 px-8 pt-6 max-w-6xl mx-auto">
       {isConnectModalOpen && (
         <ConnectAccountModal
           isOpen={isConnectModalOpen}
@@ -52,7 +52,7 @@ export default function DashboardPage() {
       )}
 
       {/* Top Section - Total Assets & Accounts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5 w-full mx-3">
         
         {/* Total Assets Card */}
         <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-6 flex flex-col justify-between aspect-square w-full">
@@ -130,7 +130,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom Section - Investment, Crypto, DeFi Protocol */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6 w-full mx-3">
         
         {/* Investment Card */}
         <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-6 flex flex-col justify-between aspect-square w-full">
@@ -172,7 +172,7 @@ export default function DashboardPage() {
 
       {/* Recent Transactions Section */}
       <div className="w-full">
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-8 w-full">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-6 w-full mx-3">
           <h3 className="text-xl font-bold text-white mb-6">Recent Transactions</h3>
           
           {recentTransactions.length === 0 ? (
