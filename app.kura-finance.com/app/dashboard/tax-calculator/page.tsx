@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export default function BudgetPage() {
+export default function TaxCalculatorPage() {
   return (
     <div className="w-full h-full flex items-center justify-center">
       <div className="text-center">
@@ -12,7 +12,7 @@ export default function BudgetPage() {
           </svg>
         </div>
         <h1 className="text-3xl font-bold text-white mb-2">Coming Soon</h1>
-        <p className="text-gray-400 text-lg">Budget management is under development</p>
+        <p className="text-gray-400 text-lg">Tax Calculator is under development</p>
         <p className="text-gray-500 text-sm mt-4">We're working hard to bring you this feature</p>
       </div>
     </div>
