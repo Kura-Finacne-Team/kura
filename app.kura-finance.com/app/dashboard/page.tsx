@@ -4,6 +4,7 @@
 import React, { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useFinanceStore } from '../store/useFinanceStore';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const ConnectAccountModal = dynamic(() => import('@/components/ConnectAccountModal'), {
   ssr: false,
@@ -12,6 +13,7 @@ const ConnectAccountModal = dynamic(() => import('@/components/ConnectAccountMod
 export default function DashboardPage() {
   const accounts = useFinanceStore(state => state.accounts);
   const transactions = useFinanceStore(state => state.transactions);
+  const assetHistory = useFinanceStore(state => state.assetHistory);
 
   const [isConnectModalOpen, setIsConnectModalOpen] = useState<boolean>(false);
 
@@ -32,8 +34,16 @@ export default function DashboardPage() {
       .slice(0, 5);
   }, [transactions]);
 
+  // Format asset history for chart
+  const chartData = useMemo(() => {
+    return assetHistory.map(snapshot => ({
+      time: new Date(snapshot.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      value: snapshot.totalAssets,
+    }));
+  }, [assetHistory]);
+
   return (
-    <div className="w-full pb-10">
+    <div className="w-full pb-10 px-6 pt-6">
       {isConnectModalOpen && (
         <ConnectAccountModal
           isOpen={isConnectModalOpen}
@@ -42,30 +52,55 @@ export default function DashboardPage() {
       )}
 
       {/* Top Section - Total Assets & Accounts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 mx-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         
         {/* Total Assets Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-8 flex flex-col justify-between h-96">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-8 flex flex-col justify-between aspect-square">
           <div>
             <p className="text-gray-400 text-sm font-medium mb-2">Total Assets</p>
             <h2 className="text-4xl font-bold text-white">${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
           </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Total Accounts</span>
-              <span className="text-white font-medium">{accounts.length}</span>
+          
+          {/* Chart */}
+          {chartData.length > 0 ? (
+            <div className="h-32 -mx-8 -mb-8 flex items-end">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                  <XAxis dataKey="time" stroke="rgba(255,255,255,0.3)" style={{ fontSize: '12px' }} />
+                  <YAxis stroke="rgba(255,255,255,0.3)" style={{ fontSize: '12px' }} width={40} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0B0B0F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                    formatter={(value) => `$${(value as number).toFixed(2)}`}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke="#8B5CF6" 
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
-            <button
-              onClick={openConnectFlow}
-              className="w-full mt-4 py-2.5 rounded-lg bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white text-sm font-medium transition-colors"
-            >
-              Connect Account
-            </button>
-          </div>
+          ) : (
+            <div className="space-y-2 mt-auto">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Total Accounts</span>
+                <span className="text-white font-medium">{accounts.length}</span>
+              </div>
+              <button
+                onClick={openConnectFlow}
+                className="w-full mt-4 py-2.5 rounded-lg bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white text-sm font-medium transition-colors"
+              >
+                Connect Account
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Accounts Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-8 flex flex-col justify-between h-96 overflow-y-auto">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-8 flex flex-col justify-between aspect-square overflow-y-auto">
           <div>
             <p className="text-gray-400 text-sm font-medium mb-4">Accounts</p>
             <div className="space-y-3">
@@ -82,15 +117,23 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
+          <div className="mt-4 pt-4 border-t border-white/5">
+            <button
+              onClick={openConnectFlow}
+              className="w-full py-2.5 rounded-lg bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white text-sm font-medium transition-colors"
+            >
+              Connect Account
+            </button>
+          </div>
         </div>
 
       </div>
 
       {/* Bottom Section - Investment, Crypto, DeFi Protocol */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 mx-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         
         {/* Investment Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-8 flex flex-col justify-between h-96">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-8 flex flex-col justify-between aspect-square">
           <div>
             <p className="text-gray-400 text-sm font-medium mb-2">Investment</p>
             <h3 className="text-3xl font-bold text-white mb-4">$0.00</h3>
@@ -102,7 +145,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Crypto Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-8 flex flex-col justify-between h-96">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-8 flex flex-col justify-between aspect-square">
           <div>
             <p className="text-gray-400 text-sm font-medium mb-2">Crypto</p>
             <h3 className="text-3xl font-bold text-white mb-4">$0.00</h3>
@@ -114,7 +157,7 @@ export default function DashboardPage() {
         </div>
 
         {/* DeFi Protocol Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-8 flex flex-col justify-between h-96">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-8 flex flex-col justify-between aspect-square">
           <div>
             <p className="text-gray-400 text-sm font-medium mb-2">DeFi Protocol</p>
             <h3 className="text-3xl font-bold text-white mb-4">$0.00</h3>
@@ -128,7 +171,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Transactions Section */}
-      <div className="mx-2">
+      <div>
         <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-8">
           <h3 className="text-xl font-bold text-white mb-6">Recent Transactions</h3>
           
