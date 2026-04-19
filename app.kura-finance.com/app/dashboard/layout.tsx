@@ -42,14 +42,13 @@ export default function DashboardLayout({
 
   return (
     <div className="flex flex-col h-screen">
+      {/* TopNav - Fixed at top */}
+      <TopNav />
       
       {/* Main content area with Sidebar */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Fixed, non-scrollable */}
         <Sidebar />
-
-        {/* TopNav - Fixed at top */}
-        <TopNav />
         
         {/* Main content - Scrollable */}
         <main className="relative z-30 flex-1 overflow-y-auto bg-gradient-to-br from-[#0B0B0F] to-[#1A1A24]/30">
