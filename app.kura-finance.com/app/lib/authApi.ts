@@ -1,12 +1,10 @@
 /**
  * Authentication API Service
- * 对齐 kura-app 实现
+ * Web 客户端 - 使用 HttpOnly Cookie
+ * 根据认证系统指南实现
  */
 
 import { handleFetchError, handleResponseError, logResponse, logSuccess, extractErrorMessage } from './errorHandler';
-
-// Backend URL must be set via NEXT_PUBLIC_BACKEND_URL environment variable
-const AUTH_TOKEN_KEY = 'kura.auth.token';
 
 export interface BackendUser {
   id: string;
@@ -20,7 +18,6 @@ export interface BackendUserProfile extends BackendUser {
 }
 
 export interface AuthResponse {
-  token: string;
   user: BackendUserProfile;
 }
 
@@ -50,37 +47,14 @@ export const getBackendBaseUrl = (): string => {
   return backendUrl;
 };
 
-export const getStoredAuthToken = (): string | null => {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return null;
-    return window.localStorage.getItem(AUTH_TOKEN_KEY);
-  } catch {
-    return null;
-  }
-};
-
-export const setStoredAuthToken = (token: string): void => {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-    window.localStorage.setItem(AUTH_TOKEN_KEY, token);
-  } catch {
-    // Silently fail if localStorage is not available
-  }
-};
-
-export const clearStoredAuthToken = (): void => {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-    window.localStorage.removeItem(AUTH_TOKEN_KEY);
-  } catch {
-    // Silently fail if localStorage is not available
-  }
-};
-
+/**
+ * Web 客户端 API 请求
+ * 自动包含 X-Client-Type: web 和 credentials: 'include'
+ * Token 通过 HttpOnly Cookie 自动发送
+ */
 async function apiRequest<T>(
   path: string,
-  options: RequestInit = {},
-  token?: string
+  options: RequestInit = {}
 ): Promise<T> {
   const baseUrl = getBackendBaseUrl();
   const url = `${baseUrl}${path}`;
@@ -89,20 +63,19 @@ async function apiRequest<T>(
   if (!headers.has('Content-Type') && options.body) {
     headers.set('Content-Type', 'application/json');
   }
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
+  // 标识为 Web 客户端
+  headers.set('X-Client-Type', 'web');
 
   try {
     console.log('[AuthAPI] Fetching:', {
       method: options.method || 'GET',
       url,
-      hasAuth: !!token,
     });
 
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: 'include', // 重要: 包含 HttpOnly Cookie
     });
 
     logResponse(response.status, response.statusText, response.headers.get('content-type'), url, 'AuthAPI');
@@ -160,17 +133,30 @@ export const loginUser = (email: string, password: string): Promise<AuthResponse
 };
 
 /**
- * 获取当前用户资料
+ * 用户登出
+ * Web 客户端: 清除 HttpOnly Cookie
  */
-export const fetchCurrentUserProfile = (token: string): Promise<{ user: BackendUserProfile }> => {
-  return apiRequest<{ user: BackendUserProfile }>('/api/auth/me', { method: 'GET' }, token);
+export const logoutUser = (): Promise<{ message: string }> => {
+  return apiRequest<{ message: string }>('/api/auth/logout', {
+    method: 'POST',
+  });
+};
+
+/**
+ * 获取当前用户资料
+ * Cookie 会自动发送，无需手动传递 token
+ */
+export const fetchCurrentUserProfile = (): Promise<{ user: BackendUserProfile }> => {
+  return apiRequest<{ user: BackendUserProfile }>('/api/auth/me', {
+    method: 'GET',
+  });
 };
 
 /**
  * 更新当前用户资料
+ * Cookie 会自动发送，无需手动传递 token
  */
 export const updateCurrentUserProfile = (
-  token: string,
   payload: { displayName?: string; avatarUrl?: string }
 ): Promise<{ user: BackendUserProfile }> => {
   return apiRequest<{ user: BackendUserProfile }>(
@@ -178,16 +164,15 @@ export const updateCurrentUserProfile = (
     {
       method: 'PATCH',
       body: JSON.stringify(payload),
-    },
-    token
+    }
   );
 };
 
 /**
  * 改变密码
+ * Cookie 会自动发送，无需手动传递 token
  */
 export const changePassword = (
-  token: string,
   oldPassword: string,
   newPassword: string
 ): Promise<{ message: string }> => {
@@ -196,8 +181,7 @@ export const changePassword = (
     {
       method: 'POST',
       body: JSON.stringify({ oldPassword, newPassword }),
-    },
-    token
+    }
   );
 };
 

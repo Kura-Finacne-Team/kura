@@ -1,12 +1,10 @@
 import { create } from 'zustand';
 import {
-  setStoredAuthToken,
-  clearStoredAuthToken,
-  getStoredAuthToken,
   fetchCurrentUserProfile,
   updateCurrentUserProfile,
   loginUser,
   registerUser,
+  logoutUser,
   changePassword as changePasswordApi,
   requestPasswordReset as requestPasswordResetApi,
   resetPassword as resetPasswordApi,
@@ -17,6 +15,8 @@ import {
   createPlaidLinkToken,
   exchangePlaidPublicToken,
   disconnectPlaidAccount as disconnectPlaidAccountApi,
+  fetchPlaidFinanceSnapshot,
+  updatePlaidAccountOrder as updatePlaidAccountOrderApi,
 } from '@/lib/plaidApi';
 import { useFinanceStore } from './useFinanceStore';
 
@@ -112,11 +112,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ authStatus: 'loading', authError: null });
 
       const response = await loginUser(normalizedEmail, password);
-      setStoredAuthToken(response.token);
+      // Web 客户端: Token 存储在 HttpOnly Cookie 中，无需手动存储
 
       console.info('[AppStore] Login successful', { email: normalizedEmail });
       set({
-        authToken: response.token,
+        authToken: 'web-client', // 标记为 web 客户端（token 在 cookie 中）
         authStatus: 'authenticated',
         userProfile: {
           displayName: response.user.displayName,
@@ -137,7 +137,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       try {
         console.debug('[AppStore] Auto-loading Plaid finance data after login');
         const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
-        await hydratePlaidFinanceData(response.token);
+        await hydratePlaidFinanceData();
         console.info('[AppStore] Plaid finance data auto-loaded after login');
 
         // Record asset snapshot for performance tracking
@@ -162,11 +162,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ authStatus: 'loading', authError: null });
 
       const response = await registerUser(normalizedEmail, password);
-      setStoredAuthToken(response.token);
+      // Web 客户端: Token 存储在 HttpOnly Cookie 中，无需手动存储
 
       console.info('[AppStore] Signup successful', { email: normalizedEmail });
       set({
-        authToken: response.token,
+        authToken: 'web-client', // 标记为 web 客户端（token 在 cookie 中）
         authStatus: 'authenticated',
         userProfile: {
           displayName: response.user.displayName,
@@ -187,7 +187,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       try {
         console.debug('[AppStore] Auto-loading Plaid finance data after signup');
         const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
-        await hydratePlaidFinanceData(response.token);
+        await hydratePlaidFinanceData();
         console.info('[AppStore] Plaid finance data auto-loaded after signup');
 
         // Record asset snapshot for performance tracking
@@ -208,7 +208,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   logout: async () => {
     try {
       console.info('[AppStore] Logging out');
-      clearStoredAuthToken();
+      // 调用后端登出 API，清除 HttpOnly Cookie
+      await logoutUser();
+      
       set({
         authToken: null,
         authStatus: 'unauthenticated',
@@ -230,13 +232,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   changePassword: async (oldPassword: string, newPassword: string) => {
     try {
-      const authToken = get().authToken;
-      if (!authToken) {
-        throw new Error('Not authenticated');
-      }
-
       console.debug('[AppStore] Changing password');
-      await changePasswordApi(authToken, oldPassword, newPassword);
+      await changePasswordApi(oldPassword, newPassword);
       console.info('[AppStore] Password changed successfully');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Password change failed';
@@ -287,11 +284,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       console.debug('[AppStore] Confirming registration', { email });
       const response = await confirmRegisterApi(email, password, registerToken);
-      setStoredAuthToken(response.token);
+      // Web 客户端: Token 存储在 HttpOnly Cookie 中，无需手动存储
 
       console.info('[AppStore] Registration confirmed successfully');
       set({
-        authToken: response.token,
+        authToken: 'web-client', // 标记为 web 客户端（token 在 cookie 中）
         authStatus: 'authenticated',
         userProfile: {
           displayName: response.user.displayName,
@@ -312,7 +309,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       try {
         console.debug('[AppStore] Auto-loading Plaid finance data after registration confirmation');
         const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
-        await hydratePlaidFinanceData(response.token);
+        await hydratePlaidFinanceData();
         console.info('[AppStore] Plaid finance data auto-loaded after registration confirmation');
 
         // Record asset snapshot for performance tracking
@@ -340,52 +337,51 @@ export const useAppStore = create<AppState>((set, get) => ({
         return;
       }
 
-      const storedToken = getStoredAuthToken();
-      if (!storedToken) {
-        console.info('[AppStore] No stored token found');
-        set({ authStatus: 'unauthenticated', authError: null });
-        return;
-      }
-
-      console.debug('[AppStore] Found stored token, fetching profile');
-      const response = await fetchCurrentUserProfile(storedToken);
-
-      console.info('[AppStore] Profile fetched successfully');
-      set({
-        authToken: storedToken,
-        authStatus: 'authenticated',
-        userProfile: {
-          displayName: response.user.displayName,
-          email: response.user.email,
-          avatarUrl: response.user.avatarUrl || '',
-          membershipLabel: response.user.membershipLabel || '',
-        },
-        authError: null,
-        preferences: {
-          baseCurrency: 'USD',
-          largeTransactionAlerts: false,
-          weeklyAiSummary: false,
-        },
-        aiInsights: [],
-      });
-
-      // Auto-load Plaid data from backend if Access Token was previously saved
+      // Web 客户端: Token 在 HttpOnly Cookie 中，尝试直接调用 API
+      console.debug('[AppStore] Web client - attempting to fetch profile from cookie');
       try {
-        console.debug('[AppStore] Auto-loading Plaid finance data');
-        const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
-        await hydratePlaidFinanceData(storedToken);
-        console.info('[AppStore] Plaid finance data auto-loaded successfully');
+        const response = await fetchCurrentUserProfile();
 
-        // Record asset snapshot for performance tracking
-        const recordAssetSnapshot = useFinanceStore.getState().recordAssetSnapshot;
-        recordAssetSnapshot();
-      } catch (plaidError) {
-        // Plaid data loading is optional - don't fail the login if it fails
-        console.warn('[AppStore] Failed to auto-load Plaid data', plaidError);
+        console.info('[AppStore] Profile fetched successfully');
+        set({
+          authToken: 'web-client', // 标记为 web 客户端（token 在 cookie 中）
+          authStatus: 'authenticated',
+          userProfile: {
+            displayName: response.user.displayName,
+            email: response.user.email,
+            avatarUrl: response.user.avatarUrl || '',
+            membershipLabel: response.user.membershipLabel || '',
+          },
+          authError: null,
+          preferences: {
+            baseCurrency: 'USD',
+            largeTransactionAlerts: false,
+            weeklyAiSummary: false,
+          },
+          aiInsights: [],
+        });
+
+        // Auto-load Plaid data from backend
+        try {
+          console.debug('[AppStore] Auto-loading Plaid finance data');
+          const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
+          await hydratePlaidFinanceData();
+          console.info('[AppStore] Plaid finance data auto-loaded successfully');
+
+          // Record asset snapshot for performance tracking
+          const recordAssetSnapshot = useFinanceStore.getState().recordAssetSnapshot;
+          recordAssetSnapshot();
+        } catch (plaidError) {
+          // Plaid data loading is optional - don't fail the login if it fails
+          console.warn('[AppStore] Failed to auto-load Plaid data', plaidError);
+        }
+      } catch (error) {
+        // No valid cookie or session
+        console.info('[AppStore] No valid session found');
+        set({ authStatus: 'unauthenticated', authError: null, authToken: null });
       }
     } catch (error) {
       console.warn('[AppStore] Failed to hydrate from storage', error);
-      clearStoredAuthToken();
       set({ authStatus: 'unauthenticated', authToken: null });
     }
   },
@@ -393,13 +389,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   // User methods
   setDisplayName: async (displayName) => {
     try {
-      const authToken = get().authToken;
-      if (!authToken) {
-        return;
-      }
-
       console.debug('[AppStore] Updating display name', { displayName });
-      const response = await updateCurrentUserProfile(authToken, { displayName });
+      const response = await updateCurrentUserProfile({ displayName });
       console.info('[AppStore] Display name updated');
 
       set((state) => ({
@@ -461,15 +452,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   hydrateUserProfile: async () => {
-    const authToken = get().authToken;
-
-    if (!authToken) {
-      set({ authStatus: 'unauthenticated' });
-      return;
-    }
-
     try {
-      const response = await fetchCurrentUserProfile(authToken);
+      const response = await fetchCurrentUserProfile();
       set({
         userProfile: {
           displayName: response.user.displayName,
@@ -488,14 +472,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Plaid methods
   requestPlaidLinkToken: async () => {
     try {
-      const authToken = get().authToken;
-      if (!authToken) {
-        console.warn('[AppStore] Cannot request Plaid link token: not authenticated');
-        return null;
-      }
-
       console.debug('[AppStore] Requesting Plaid link token');
-      const result = await createPlaidLinkToken(authToken);
+      const result = await createPlaidLinkToken();
       console.debug('[AppStore] Plaid API response received', { result });
 
       // Handle both { link_token } and { token } response formats
@@ -517,16 +495,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   confirmPlaidExchange: async (publicToken: string, institutionName?: string) => {
     try {
-      const authToken = get().authToken;
-      if (!authToken) {
-        throw new Error('Not authenticated');
-      }
-
       console.debug('[AppStore] Exchanging Plaid public token', {
         institution: institutionName,
       });
 
-      const result = await exchangePlaidPublicToken(authToken, {
+      const result = await exchangePlaidPublicToken({
         public_token: publicToken,
         institution_name: institutionName,
       });
@@ -535,7 +508,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       // Load the updated finance data
       const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
-      await hydratePlaidFinanceData(authToken);
+      await hydratePlaidFinanceData();
 
       // Record asset snapshot for performance tracking
       const recordAssetSnapshot = useFinanceStore.getState().recordAssetSnapshot;
@@ -553,14 +526,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   disconnectPlaidAccount: async (accountId: string) => {
     try {
-      const authToken = get().authToken;
-      if (!authToken) {
-        throw new Error('Not authenticated');
-      }
-
       console.debug('[AppStore] Disconnecting Plaid account', { accountId });
 
-      const result = await disconnectPlaidAccountApi(authToken, accountId);
+      const result = await disconnectPlaidAccountApi(accountId);
       console.info('[AppStore] Plaid account disconnected successfully', { result });
 
       // Update local state to remove the account
@@ -569,7 +537,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       // Reload the updated finance data
       const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
-      await hydratePlaidFinanceData(authToken);
+      await hydratePlaidFinanceData();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to disconnect Plaid account';
       console.error('[AppStore] Failed to disconnect Plaid account', { error: errorMessage });

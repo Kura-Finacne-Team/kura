@@ -74,8 +74,7 @@ export class PlaidApiError extends Error {
 
 async function plaidRequest<T>(
   path: string,
-  options: RequestInit = {},
-  token?: string
+  options: RequestInit = {}
 ): Promise<T> {
   const baseUrl = getBackendBaseUrl();
   const url = `${baseUrl}${path}`;
@@ -84,20 +83,19 @@ async function plaidRequest<T>(
   if (!headers.has('Content-Type') && options.body) {
     headers.set('Content-Type', 'application/json');
   }
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
+  // 标识为 Web 客户端
+  headers.set('X-Client-Type', 'web');
 
   try {
     console.debug('[PlaidAPI] Fetching:', {
       method: options.method || 'GET',
       url,
-      hasAuth: !!token,
     });
 
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: 'include', // 重要: 包含 HttpOnly Cookie
     });
 
     logResponse(response.status, response.statusText, response.headers.get('content-type'), url, 'PlaidAPI');
@@ -134,22 +132,21 @@ async function plaidRequest<T>(
 
 /**
  * 创建 Plaid Link Token
- * 用户打开 Plaid Link 时需要此 token
+ * Cookie 会自动发送，无需手动传递 token
  */
-export const createPlaidLinkToken = (token: string): Promise<{ link_token: string }> => {
+export const createPlaidLinkToken = (): Promise<{ link_token: string }> => {
   return plaidRequest<{ link_token: string }>(
     '/api/plaid/create-link-token',
-    { method: 'POST' },
-    token
+    { method: 'POST' }
   );
 };
 
 /**
  * 交换 Plaid Public Token 为 Access Token
  * 用户在 Plaid 完成授权后调用
+ * Cookie 会自动发送，无需手动传递 token
  */
 export const exchangePlaidPublicToken = (
-  token: string,
   payload: { public_token: string; institution_name?: string }
 ): Promise<{ status: string; message: string }> => {
   return plaidRequest<{ status: string; message: string }>(
@@ -157,28 +154,27 @@ export const exchangePlaidPublicToken = (
     {
       method: 'POST',
       body: JSON.stringify(payload),
-    },
-    token
+    }
   );
 };
 
 /**
  * 获取财务数据快照
  * 包括银行账户、交易、投资账户和投资产品
+ * Cookie 会自动发送，无需手动传递 token
  */
-export const fetchPlaidFinanceSnapshot = (token: string): Promise<BackendFinanceSnapshot> => {
+export const fetchPlaidFinanceSnapshot = (): Promise<BackendFinanceSnapshot> => {
   return plaidRequest<BackendFinanceSnapshot>(
     '/api/plaid/finance-snapshot',
-    { method: 'GET' },
-    token
+    { method: 'GET' }
   );
 };
 
 /**
  * 断开 Plaid 银行账户连接
+ * Cookie 会自动发送，无需手动传递 token
  */
 export const disconnectPlaidAccount = (
-  token: string,
   accountId: string
 ): Promise<{ status: string; message: string }> => {
   return plaidRequest<{ status: string; message: string }>(
@@ -186,16 +182,15 @@ export const disconnectPlaidAccount = (
     {
       method: 'DELETE',
       body: JSON.stringify({ accountId }),
-    },
-    token
+    }
   );
 };
 
 /**
  * 更新 Plaid 账户顺序（用于 UI 排序）
+ * Cookie 会自动发送，无需手动传递 token
  */
 export const updatePlaidAccountOrder = (
-  token: string,
   payload: UpdatePlaidAccountOrderPayload
 ): Promise<{ status: string; message: string }> => {
   return plaidRequest<{ status: string; message: string }>(
@@ -203,7 +198,6 @@ export const updatePlaidAccountOrder = (
     {
       method: 'PUT',
       body: JSON.stringify(payload),
-    },
-    token
+    }
   );
 };

@@ -86,7 +86,7 @@ interface FinanceState {
   setSelectedTimeRange: (timeRange: '1M' | '3M' | '6M' | '1Y' | 'All') => void;
   
   // Plaid Operations
-  hydratePlaidFinanceData: (token: string) => Promise<void>;
+  hydratePlaidFinanceData: () => Promise<void>;
   clearPlaidFinanceData: () => void;
   disconnectBankingAccount: (accountId: string) => Promise<void>;
   disconnectInvestmentAccount: (accountId: string) => void;
@@ -150,12 +150,12 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   setSelectedTimeRange: (timeRange) => set({ selectedTimeRange: timeRange }),
   
   // Plaid Data Hydration
-  hydratePlaidFinanceData: async (token: string) => {
+  hydratePlaidFinanceData: async () => {
     try {
       set({ isLoadingPlaidData: true, plaidError: null });
       console.debug('[FinanceStore] Fetching Plaid finance snapshot');
       
-      const snapshot = await fetchPlaidFinanceSnapshot(token);
+      const snapshot = await fetchPlaidFinanceSnapshot();
       console.info('[FinanceStore] Plaid snapshot fetched successfully', {
         accountsCount: snapshot.accounts.length,
         transactionsCount: snapshot.transactions.length,
