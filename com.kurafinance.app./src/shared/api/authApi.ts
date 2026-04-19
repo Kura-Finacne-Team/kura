@@ -151,7 +151,8 @@ export const clearStoredAuthToken = async (): Promise<void> => {
 async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
-  token?: string
+  token?: string,
+  timeoutMs: number = 30000 // 30 second timeout
 ): Promise<T> {
   const baseUrl = getBackendBaseUrl();
   const url = `${baseUrl}${path}`;
@@ -164,22 +165,29 @@ async function apiRequest<T>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  try {
-    Logger.debug('AuthAPI', 'Fetching', {
-      method: options.method || 'GET',
-      url,
-      hasAuth: !!token,
-      hasBody: !!options.body,
-      bodyPreview: options.body ? String(options.body).substring(0, 100) : undefined,
-      contentType: headers.get('Content-Type'),
-      headerCount: Array.from(headers.entries()).length,
-    });
+  Logger.debug('AuthAPI', 'Fetching', {
+    method: options.method || 'GET',
+    url,
+    hasAuth: !!token,
+    hasBody: !!options.body,
+    bodyPreview: options.body ? String(options.body).substring(0, 100) : undefined,
+    contentType: headers.get('Content-Type'),
+    headerCount: Array.from(headers.entries()).length,
+    timeoutMs,
+  });
 
+  // Create abort controller for timeout
+  const abortController = new AbortController();
+  const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
+
+  try {
     const response = await fetch(url, {
       method: options.method || 'GET',
       headers,
       body: options.body,
+      signal: abortController.signal,
     });
+    clearTimeout(timeoutId);
 
     const raw = await response.text();
     let json: (ApiErrorBody & T) | null = null;
@@ -200,6 +208,7 @@ async function apiRequest<T>(
     Logger.info('AuthAPI', 'Request successful', { response: json });
     return (json as T) ?? ({} as T);
   } catch (error) {
+    clearTimeout(timeoutId);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
     
@@ -212,6 +221,13 @@ async function apiRequest<T>(
       stack: errorStack,
       errorType: error instanceof Error ? error.constructor.name : typeof error,
     };
+    
+    // Handle AbortError (timeout)
+    if (error instanceof Error && error.name === 'AbortError') {
+      errorDetails.timeoutError = true;
+      errorDetails.timeoutMs = timeoutMs;
+      errorDetails.suggestion = `Request timed out after ${timeoutMs}ms. Network may be slow or backend unresponsive.`;
+    }
     
     // Add network-specific error info
     if (error instanceof TypeError) {
