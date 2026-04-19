@@ -34,7 +34,7 @@ COPY eslint.config.mjs ./
 COPY postcss.config.mjs ./
 
 # Install dependencies
-RUN npm ci --legacy-peer-deps
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY app ./app
