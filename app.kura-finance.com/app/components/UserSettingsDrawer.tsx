@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
@@ -81,7 +82,7 @@ export default function UserSettingsDrawer({ isOpen, onClose, anchorRef }: UserS
               {/* 頭像 */}
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] flex items-center justify-center overflow-hidden flex-shrink-0">
                 {userProfile.avatarUrl ? (
-                  <img src={userProfile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  <Image src={userProfile.avatarUrl} alt="Avatar" width={56} height={56} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-lg font-bold text-white">
                     {userProfile.displayName?.charAt(0).toUpperCase() || 'U'}
