@@ -43,7 +43,7 @@ export default function DashboardPage() {
   }, [assetHistory]);
 
   return (
-    <div className="w-full pb-10 px-8 pt-6 max-w-6xl mx-auto">
+    <div className="w-full pb-10 px-8 pt-10 max-w-6xl mx-auto">
       {isConnectModalOpen && (
         <ConnectAccountModal
           isOpen={isConnectModalOpen}
