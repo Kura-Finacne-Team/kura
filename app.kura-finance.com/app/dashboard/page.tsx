@@ -55,7 +55,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 w-full mx-2">
         
         {/* Total Assets Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 flex flex-col justify-between h-96 w-full">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 flex flex-col justify-between h-80 w-full">
           <div>
             <p className="text-gray-400 text-sm font-medium mb-1">Total Assets</p>
             <h2 className="text-4xl font-bold text-white">${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
@@ -63,7 +63,7 @@ export default function DashboardPage() {
           
           {/* Chart */}
           {chartData.length > 0 ? (
-            <div className="h-40 -mx-8 -mb-8 flex items-end">
+            <div className="h-32 -mx-8 -mb-8 flex items-end">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -100,7 +100,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Accounts Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 flex flex-col justify-between h-96 overflow-y-auto w-full">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 flex flex-col justify-between h-80 overflow-y-auto w-full">
           <div>
             <p className="text-gray-400 text-sm font-medium mb-2">Accounts</p>
             <div className="space-y-1">
