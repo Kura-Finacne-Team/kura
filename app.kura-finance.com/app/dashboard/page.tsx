@@ -55,10 +55,10 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 w-full mx-2">
         
         {/* Total Assets Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-4 flex flex-col justify-between h-48 w-full">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 flex flex-col justify-between h-48 w-full">
           <div>
-            <p className="text-gray-400 text-xs font-medium mb-1">Total Assets</p>
-            <h2 className="text-2xl font-bold text-white">${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+            <p className="text-gray-400 text-xs font-medium mb-0.5">Total Assets</p>
+            <h2 className="text-xl font-bold text-white">${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
           </div>
           
           {/* Chart */}
@@ -84,14 +84,14 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="space-y-1 mt-auto">
-              <div className="flex justify-between text-sm">
+            <div className="space-y-0.5 mt-auto">
+              <div className="flex justify-between text-xs">
                 <span className="text-gray-500">Total Accounts</span>
                 <span className="text-white font-medium">{accounts.length}</span>
               </div>
               <button
                 onClick={openConnectFlow}
-                className="w-full mt-2 py-2 rounded-lg bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white text-sm font-medium transition-colors"
+                className="w-full mt-1 py-1 rounded-lg bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white text-xs font-medium transition-colors"
               >
                 Connect Account
               </button>
@@ -100,27 +100,27 @@ export default function DashboardPage() {
         </div>
 
         {/* Accounts Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-4 flex flex-col justify-between h-48 overflow-y-auto w-full">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 flex flex-col justify-between h-48 overflow-y-auto w-full">
           <div>
-            <p className="text-gray-400 text-sm font-medium mb-2">Accounts</p>
-            <div className="space-y-1">
+            <p className="text-gray-400 text-xs font-medium mb-1.5">Accounts</p>
+            <div className="space-y-0.5">
               {accounts.map((account) => (
-                <div key={account.id} className="flex justify-between items-center py-1 border-b border-white/5 last:border-0">
+                <div key={account.id} className="flex justify-between items-center py-0.5 border-b border-white/5 last:border-0">
                   <div>
-                    <p className="text-white font-medium text-sm">{account.name}</p>
+                    <p className="text-white font-medium text-xs">{account.name}</p>
                     <p className="text-gray-500 text-xs">{account.type}</p>
                   </div>
-                  <p className={`font-mono font-medium ${account.type === 'credit' ? 'text-red-400' : 'text-green-400'}`}>
+                  <p className={`font-mono font-medium text-xs ${account.type === 'credit' ? 'text-red-400' : 'text-green-400'}`}>
                     ${account.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               ))}
             </div>
           </div>
-          <div className="mt-2 pt-2 border-t border-white/5">
+          <div className="mt-1 pt-1.5 border-t border-white/5">
             <button
               onClick={openConnectFlow}
-              className="w-full py-1.5 rounded-lg bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white text-sm font-medium transition-colors"
+              className="w-full py-1 rounded-lg bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white text-xs font-medium transition-colors"
             >
               Connect Account
             </button>
@@ -133,37 +133,37 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6 w-full mx-2">
         
         {/* Investment Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-4 flex flex-col justify-between h-40 w-full">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 flex flex-col justify-between h-40 w-full">
           <div>
-            <p className="text-gray-400 text-sm font-medium mb-1">Investment</p>
-            <h3 className="text-2xl font-bold text-white mb-2">$0.00</h3>
+            <p className="text-gray-400 text-xs font-medium mb-0.5">Investment</p>
+            <h3 className="text-lg font-bold text-white mb-1">$0.00</h3>
             <p className="text-gray-500 text-xs">Portfolio growth pending setup</p>
           </div>
-          <button className="w-full py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white text-xs font-medium transition-colors">
+          <button className="w-full py-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white text-xs font-medium transition-colors">
             View Details
           </button>
         </div>
 
         {/* Crypto Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-4 flex flex-col justify-between h-40 w-full">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 flex flex-col justify-between h-40 w-full">
           <div>
-            <p className="text-gray-400 text-sm font-medium mb-1">Crypto</p>
-            <h3 className="text-2xl font-bold text-white mb-2">$0.00</h3>
+            <p className="text-gray-400 text-xs font-medium mb-0.5">Crypto</p>
+            <h3 className="text-lg font-bold text-white mb-1">$0.00</h3>
             <p className="text-gray-500 text-xs">Connect your Web3 wallet</p>
           </div>
-          <button className="w-full py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white text-xs font-medium transition-colors">
+          <button className="w-full py-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white text-xs font-medium transition-colors">
             Connect Wallet
           </button>
         </div>
 
         {/* DeFi Protocol Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-4 flex flex-col justify-between h-40 w-full">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 flex flex-col justify-between h-40 w-full">
           <div>
-            <p className="text-gray-400 text-sm font-medium mb-1">DeFi Protocol</p>
-            <h3 className="text-2xl font-bold text-white mb-2">$0.00</h3>
+            <p className="text-gray-400 text-xs font-medium mb-0.5">DeFi Protocol</p>
+            <h3 className="text-lg font-bold text-white mb-1">$0.00</h3>
             <p className="text-gray-500 text-xs">Track your DeFi positions</p>
           </div>
-          <button className="w-full py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white text-xs font-medium transition-colors">
+          <button className="w-full py-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white text-xs font-medium transition-colors">
             Add Protocol
           </button>
         </div>
@@ -172,24 +172,24 @@ export default function DashboardPage() {
 
       {/* Recent Transactions Section */}
       <div className="w-full">
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-4 w-full mx-2">
-          <h3 className="text-lg font-bold text-white mb-3">Recent Transactions</h3>
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 w-full mx-2">
+          <h3 className="text-base font-bold text-white mb-2">Recent Transactions</h3>
           
           {recentTransactions.length === 0 ? (
             <p className="text-gray-500 text-sm text-center py-8">No transactions yet</p>
           ) : (
             <div className="space-y-0">
               {recentTransactions.map((transaction, index) => (
-                <div key={transaction.id} className={`flex justify-between items-center py-2 ${index !== recentTransactions.length - 1 ? 'border-b border-white/5' : ''}`}>
+                <div key={transaction.id} className={`flex justify-between items-center py-1.5 ${index !== recentTransactions.length - 1 ? 'border-b border-white/5' : ''}`}>
                   <div className="flex-1">
-                    <p className="text-white font-medium text-sm">{transaction.merchant}</p>
+                    <p className="text-white font-medium text-xs">{transaction.merchant}</p>
                     <div className="flex gap-3 mt-0.5">
                       <p className="text-gray-500 text-xs">{transaction.category}</p>
                       <p className="text-gray-500 text-xs">{new Date(transaction.date).toLocaleDateString('en-US')}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`font-mono font-medium text-sm ${transaction.type === 'credit' ? 'text-red-400' : 'text-green-400'}`}>
+                    <p className={`font-mono font-medium text-xs ${transaction.type === 'credit' ? 'text-red-400' : 'text-green-400'}`}>
                       {transaction.type === 'credit' ? '-' : '+'} ${transaction.amount}
                     </p>
                     <p className="text-gray-500 text-xs mt-0.5">{transaction.accountName}</p>
