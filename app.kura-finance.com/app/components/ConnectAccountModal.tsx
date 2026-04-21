@@ -9,6 +9,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useFinanceStore } from '@/store/useFinanceStore';
 import { useConnect } from 'wagmi';
 import { usePlaidLink, type PlaidLinkOnSuccessMetadata } from 'react-plaid-link';
+import { usePlaidReady } from '@/context/PlaidProvider';
 import {
   PlaidApiError,
   createPlaidLinkToken,
@@ -27,48 +28,21 @@ interface PlaidLinkError {
 }
 
 /**
- * Safe wrapper for Plaid link with error handling
+ * Inner modal content component - only rendered when Plaid is ready
  */
-function useSafePlaidLink(
-  token: string | null,
-  onSuccess: (publicToken: string, metadata: PlaidLinkOnSuccessMetadata) => void,
-  onExit?: (error: PlaidLinkError | null) => void
-) {
-  const [error, setError] = useState<Error | null>(null);
-
-  const result = usePlaidLink({
-    token: token || null,
-    onSuccess,
-    onExit: (plaidError: PlaidLinkError | null) => {
-      if (plaidError) {
-        const errorMessage = plaidError.display_message || plaidError.error_message || 'Plaid error';
-        setError(new Error(errorMessage));
-        console.error('[useSafePlaidLink] Plaid exited with error:', plaidError);
-      }
-      onExit?.(plaidError);
-    },
-  });
-
-  return { ...result, error };
-}
-
-export default function ConnectAccountModal({ isOpen, onClose }: ConnectAccountModalProps) {
-  const [mounted, setMounted] = useState(false);
+function ConnectAccountModalContent({
+  isOpen,
+  onClose,
+  linkToken,
+}: ConnectAccountModalProps & { linkToken: string | null }) {
   const [isConnecting, setIsConnecting] = useState<'plaid' | 'reown' | null>(null);
   const [plaidError, setPlaidError] = useState<string | null>(null);
   const [isExchangingToken, setIsExchangingToken] = useState(false);
 
-  const linkToken = useAppStore((state) => state.plaidLinkToken);
-  const setPlaidLinkToken = useAppStore((state) => state.setPlaidLinkToken);
   const authToken = useAppStore((state) => state.authToken);
+  const setPlaidLinkToken = useAppStore((state) => state.setPlaidLinkToken);
   const hydratePlaidFinanceData = useFinanceStore((state) => state.hydratePlaidFinanceData);
   const { connectAsync, connectors } = useConnect();
-
-  // Mount state for SSR safety
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 0);
-    return () => clearTimeout(timer);
-  }, []);
 
   const onPlaidSuccess = useCallback(
     async (publicToken: string, metadata: PlaidLinkOnSuccessMetadata) => {
@@ -101,17 +75,18 @@ export default function ConnectAccountModal({ isOpen, onClose }: ConnectAccountM
     [authToken, hydratePlaidFinanceData, onClose]
   );
 
-  // Use safe Plaid link with error handling
-  const { open: openPlaid, ready: isPlaidReady, error: plaidInitError } = useSafePlaidLink(
-    linkToken,
-    onPlaidSuccess,
-    (err) => {
-      if (err) {
-        console.error('[ConnectAccountModal] Plaid exited with error:', err);
-        setPlaidError(`Plaid error: ${err.display_message || 'An error occurred'}`);
+  // Initialize Plaid Link hook - this will work because we only render this component when Plaid is ready
+  const { open: openPlaid, ready: isPlaidReady } = usePlaidLink({
+    token: linkToken,
+    onSuccess: onPlaidSuccess,
+    onExit: (error: PlaidLinkError | null) => {
+      if (error) {
+        const errorMessage = error.display_message || error.error_message || 'Plaid error occurred';
+        setPlaidError(errorMessage);
+        console.error('[ConnectAccountModal] Plaid exited with error:', error);
       }
-    }
-  );
+    },
+  });
 
   const fetchPlaidLinkToken = useCallback(
     async () => {
@@ -134,24 +109,11 @@ export default function ConnectAccountModal({ isOpen, onClose }: ConnectAccountM
     void fetchPlaidLinkToken();
   }, [fetchPlaidLinkToken, isOpen, linkToken]);
 
-  // Log initialization errors
-  useEffect(() => {
-    if (plaidInitError) {
-      console.error('[ConnectAccountModal] Plaid initialization error:', plaidInitError);
-      setPlaidError('Plaid SDK initialization failed. Please refresh the page.');
-    }
-  }, [plaidInitError]);
-
   const handlePlaidConnect = async () => {
     setPlaidError(null);
 
     if (!authToken) {
       setPlaidError('Please sign in first.');
-      return;
-    }
-
-    if (plaidInitError) {
-      setPlaidError('Plaid SDK failed to initialize. Please refresh the page.');
       return;
     }
 
@@ -241,9 +203,7 @@ export default function ConnectAccountModal({ isOpen, onClose }: ConnectAccountM
     }
   };
 
-  if (!mounted) return null;
-
-  return createPortal(
+  return (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -351,7 +311,59 @@ export default function ConnectAccountModal({ isOpen, onClose }: ConnectAccountM
           </motion.div>
         </div>
       )}
-    </AnimatePresence>,
+    </AnimatePresence>
+  );
+}
+
+/**
+ * Wrapper component that only renders modal when Plaid SDK is ready
+ */
+export default function ConnectAccountModal(props: ConnectAccountModalProps) {
+  const [mounted, setMounted] = useState(false);
+  const { isPlaidReady, plaidError: plaidSdkError } = usePlaidReady();
+  const linkToken = useAppStore((state) => state.plaidLinkToken);
+
+  // Mount state for SSR safety
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <>
+      {!isPlaidReady && props.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            onClick={props.onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="relative w-full max-w-md bg-[#0B0B0F] border border-white/10 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] p-6"
+          >
+            <div className="text-center">
+              <div className="w-8 h-8 border-4 border-[#8B5CF6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-white font-medium">Loading Plaid...</p>
+              {plaidSdkError && (
+                <p className="text-red-400 text-sm mt-2">{plaidSdkError}</p>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+      {isPlaidReady && linkToken && (
+        <ConnectAccountModalContent {...props} linkToken={linkToken} />
+      )}
+    </>,
     document.body
   );
 }
