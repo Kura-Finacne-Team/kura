@@ -88,7 +88,7 @@ const handlePlanAction = (planName: string) => {
         </section>
 
         <!-- Pricing Cards -->
-        <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-8 mb-16">
+        <div class="grid md:grid-cols-3 gap-6 lg:gap-8 mb-16 justify-items-center max-w-6xl mx-auto">
           <div v-for="(plan, index) in plans" :key="index" class="relative group flex">
             <!-- Glow effect for highlighted plan -->
             <div v-if="plan.highlighted" class="absolute inset-0 bg-gradient-to-r from-kura-primary/20 to-kura-secondary/20 rounded-2xl blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
@@ -128,7 +128,9 @@ const handlePlanAction = (planName: string) => {
                     <span class="text-kura-text-secondary text-xs leading-relaxed" v-html="feature.replace(': ', ':<br/>')"></span>
                   </div>
                   <div v-if="'footer' in plan" class="text-kura-primary text-xs pt-3 italic">
-                    {{ plan.footer }}
+                    <NuxtLink to="/business" class="hover:underline">
+                      {{ plan.footer }}
+                    </NuxtLink>
                   </div>
                 </div>
               </div>
