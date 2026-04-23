@@ -2,13 +2,16 @@
  * SRP Client (Secure Remote Password)
  *
  * 正確的 tssrp6a client API：
- *   step1(userId, password) → SRPClientSessionStep1  (有 IH)
+ *   step1(userId, password) → SRPClientSessionStep1  (有 IH，無 A)
  *   step1.step2(salt, B)    → SRPClientSessionStep2  (有 A, M1)
- *   step2.step3(M2)         → void  (驗證 server proof)
+ *   step2.step3(M2)         → void（驗證 server proof）
  *
- * 因為 A 要在 step2 才能得到，登入流程需要兩次 API 呼叫：
- * Phase 1 → 用 step1 + step2(假B) 預先取得 A
- * Phase 2 → 用真實的 B 重新計算 step2，得到真正的 M1
+ * 登入流程（後端先 commit B，client 再送 A+M1 一起驗證）：
+ *   1. POST /srp/challenge { email }          → { sessionId, srpSalt, serverB, ... }
+ *   2. step1(email, authKeyHex) → step1
+ *   3. step1.step2(srpSalt, serverB)          → { A, M1 }
+ *   4. POST /srp/verify { sessionId, A, M1 } → { serverM2, token }
+ *   5. step2.step3(serverM2)                  → void
  *
  * 安裝：npm install tssrp6a
  */
@@ -17,7 +20,6 @@ import {
   SRPClientSession,
   SRPParameters,
   SRPRoutines,
-  SRPClientSessionStep1,
 } from 'tssrp6a';
 import { getBackendBaseUrl } from '@/lib/authApi';
 
@@ -131,14 +133,6 @@ export async function srpFullLogin(
     encryptedDataKey: challenge.encryptedDataKey,
     kekSalt: challenge.kekSalt,
   };
-}
-
-// ─────────────────────────────────────────
-// 工具函式
-// ─────────────────────────────────────────
-
-async function srpGetSaltsInternal(email: string): Promise<{ srpSalt: string; kekSalt: string }> {
-  return srpPost('/api/auth/srp/salt', { email });
 }
 
 /** 取得 email 對應的 salt（外部使用） */
