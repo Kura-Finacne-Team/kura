@@ -8,7 +8,10 @@ import { AuthApiError } from '@/lib/authApi';
 export default function RootHubPage() {
   const authStatus = useAppStore((state) => state.authStatus);
   const router = useRouter();
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot_password'>('login');
+  const [resetStep, setResetStep] = useState<'request' | 'verify'>('request');
+  const [resetCode, setResetCode] = useState('');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
@@ -17,6 +20,8 @@ export default function RootHubPage() {
   const login = useAppStore((state) => state.login);
   const signup = useAppStore((state) => state.signup);
   const setPlaidLinkToken = useAppStore((state) => state.setPlaidLinkToken);
+  const requestPasswordReset = useAppStore((state) => state.requestPasswordReset);
+  const resetPassword = useAppStore((state) => state.resetPassword);
 
   // Redirect to dashboard if authenticated
   useEffect(() => {
@@ -27,6 +32,48 @@ export default function RootHubPage() {
 
   const handleAuthSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setAuthError(null);
+    setSuccessMessage(null);
+
+    if (authMode === 'forgot_password') {
+      if (resetStep === 'request') {
+        if (!email) {
+          setAuthError('Email is required.');
+          return;
+        }
+        setIsAuthenticating(true);
+        try {
+          await requestPasswordReset(email.trim());
+          setResetStep('verify');
+          setSuccessMessage('Verification code sent to your email.');
+        } catch (error) {
+          const message = error instanceof AuthApiError ? error.message : 'Failed to send reset code.';
+          setAuthError(message);
+        } finally {
+          setIsAuthenticating(false);
+        }
+      } else {
+        if (!resetCode || !password) {
+          setAuthError('Verification code and new password are required.');
+          return;
+        }
+        setIsAuthenticating(true);
+        try {
+          await resetPassword(email.trim(), resetCode.trim(), password);
+          setAuthMode('login');
+          setResetStep('request');
+          setResetCode('');
+          setPassword('');
+          setSuccessMessage('Password reset successfully. Please sign in with your new password.');
+        } catch (error) {
+          const message = error instanceof AuthApiError ? error.message : 'Password reset failed.';
+          setAuthError(message);
+        } finally {
+          setIsAuthenticating(false);
+        }
+      }
+      return;
+    }
 
     if (!email || !password) {
       setAuthError('Email and password are required.');
@@ -34,7 +81,6 @@ export default function RootHubPage() {
     }
 
     setIsAuthenticating(true);
-    setAuthError(null);
 
     try {
       if (authMode === 'register') {
@@ -78,37 +124,60 @@ export default function RootHubPage() {
             </p>
             
             <form onSubmit={handleAuthSubmit} className="w-full space-y-4">
+              {/* Success Message */}
+              {successMessage && (
+                <div className="rounded-xl bg-green-500/10 border border-green-500/30 px-4 py-3 text-xs text-green-400">
+                  {successMessage}
+                </div>
+              )}
+
               {/* Mode Switcher */}
-              <div className="flex items-center gap-2 text-xs bg-[#1A1A24] p-1 rounded-xl mb-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode('login');
-                    setAuthError(null);
-                  }}
-                  className={`flex-1 px-3 py-2 rounded-lg border transition-all ${
-                    authMode === 'login'
-                      ? 'bg-[#8B5CF6]/20 border-[#8B5CF6]/50 text-[#C4B5FD]'
-                      : 'border-transparent text-gray-400 hover:text-gray-300'
-                  }`}
-                >
-                  Sign In
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode('register');
-                    setAuthError(null);
-                  }}
-                  className={`flex-1 px-3 py-2 rounded-lg border transition-all ${
-                    authMode === 'register'
-                      ? 'bg-[#8B5CF6]/20 border-[#8B5CF6]/50 text-[#C4B5FD]'
-                      : 'border-transparent text-gray-400 hover:text-gray-300'
-                  }`}
-                >
-                  Sign Up
-                </button>
-              </div>
+              {authMode !== 'forgot_password' && (
+                <div className="flex items-center gap-2 text-xs bg-[#1A1A24] p-1 rounded-xl mb-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('login');
+                      setAuthError(null);
+                      setSuccessMessage(null);
+                    }}
+                    className={`flex-1 px-3 py-2 rounded-lg border transition-all ${
+                      authMode === 'login'
+                        ? 'bg-[#8B5CF6]/20 border-[#8B5CF6]/50 text-[#C4B5FD]'
+                        : 'border-transparent text-gray-400 hover:text-gray-300'
+                    }`}
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('register');
+                      setAuthError(null);
+                      setSuccessMessage(null);
+                    }}
+                    className={`flex-1 px-3 py-2 rounded-lg border transition-all ${
+                      authMode === 'register'
+                        ? 'bg-[#8B5CF6]/20 border-[#8B5CF6]/50 text-[#C4B5FD]'
+                        : 'border-transparent text-gray-400 hover:text-gray-300'
+                    }`}
+                  >
+                    Sign Up
+                  </button>
+                </div>
+              )}
+
+              {/* Forgot Password Header */}
+              {authMode === 'forgot_password' && (
+                <div className="text-left mb-6">
+                  <h2 className="text-lg font-semibold text-white mb-1">Reset Password</h2>
+                  <p className="text-xs text-gray-400">
+                    {resetStep === 'request'
+                      ? 'Enter your email to receive a verification code.'
+                      : 'Enter the verification code and your new password.'}
+                  </p>
+                </div>
+              )}
 
               {/* Email Input */}
               <input
@@ -117,20 +186,61 @@ export default function RootHubPage() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={authMode === 'forgot_password' && resetStep === 'verify'}
                 placeholder="Email"
-                className="w-full rounded-xl bg-[#0B0B0F] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#8B5CF6]/60 transition-colors"
+                className="w-full rounded-xl bg-[#0B0B0F] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#8B5CF6]/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               />
 
-              {/* Password Input */}
-              <input
-                type="password"
-                name={authMode === 'register' ? 'new-password' : 'current-password'}
-                autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                className="w-full rounded-xl bg-[#0B0B0F] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#8B5CF6]/60 transition-colors"
-              />
+              {/* Verify Step Inputs */}
+              {authMode === 'forgot_password' && resetStep === 'verify' && (
+                <>
+                  <input
+                    type="text"
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value)}
+                    placeholder="6-digit Verification Code"
+                    className="w-full rounded-xl bg-[#0B0B0F] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#8B5CF6]/60 transition-colors"
+                  />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="New Password"
+                    className="w-full rounded-xl bg-[#0B0B0F] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#8B5CF6]/60 transition-colors"
+                  />
+                </>
+              )}
+
+              {/* Password Input (Login/Register) */}
+              {authMode !== 'forgot_password' && (
+                <input
+                  type="password"
+                  name={authMode === 'register' ? 'new-password' : 'current-password'}
+                  autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  className="w-full rounded-xl bg-[#0B0B0F] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#8B5CF6]/60 transition-colors"
+                />
+              )}
+
+              {/* Forgot Password Link */}
+              {authMode === 'login' && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('forgot_password');
+                      setAuthError(null);
+                      setSuccessMessage(null);
+                      setResetStep('request');
+                    }}
+                    className="text-xs text-[#8B5CF6] hover:text-[#A78BFA] transition-colors"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
 
               {/* Error Message */}
               {authError && (
@@ -143,10 +253,37 @@ export default function RootHubPage() {
               <button
                 type="submit"
                 disabled={isAuthenticating}
-                className="w-full py-3 rounded-xl bg-[#8B5CF6] text-white text-sm font-semibold hover:bg-[#A78BFA] disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+                className="w-full py-3 mt-2 rounded-xl bg-[#8B5CF6] text-white text-sm font-semibold hover:bg-[#A78BFA] disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-[0_0_20px_rgba(139,92,246,0.3)]"
               >
-                {isAuthenticating ? 'Processing...' : authMode === 'register' ? 'Create Account' : 'Sign In'}
+                {isAuthenticating
+                  ? 'Processing...'
+                  : authMode === 'forgot_password'
+                  ? resetStep === 'request'
+                    ? 'Send Code'
+                    : 'Reset Password'
+                  : authMode === 'register'
+                  ? 'Create Account'
+                  : 'Sign In'}
               </button>
+
+              {/* Back to Login Link */}
+              {authMode === 'forgot_password' && (
+                <div className="mt-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('login');
+                      setAuthError(null);
+                      setSuccessMessage(null);
+                      setResetStep('request');
+                      setResetCode('');
+                    }}
+                    className="text-xs text-gray-400 hover:text-white transition-colors"
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
+              )}
             </form>
           </div>
         </div>
