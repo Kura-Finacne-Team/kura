@@ -11,6 +11,7 @@ import {
   requestRegisterToken as requestRegisterTokenApi,
   confirmRegister as confirmRegisterApi,
 } from '@/lib/authApi';
+import { zkLogin, zkLoginLegacy, zkRegister, clearCryptoSession } from '@/lib/crypto/zkAuth';
 import {
   createPlaidLinkToken,
   exchangePlaidPublicToken,
@@ -107,15 +108,21 @@ export const useAppStore = create<AppState>((set, get) => ({
   login: async (email: string, password: string) => {
     try {
       const normalizedEmail = email.toLowerCase().trim();
-      console.debug('[AppStore] Attempting login', { email: normalizedEmail });
+      console.debug('[AppStore] Attempting ZK login', { email: normalizedEmail });
       set({ authStatus: 'loading', authError: null });
 
-      const response = await loginUser(normalizedEmail, password);
-      // Web 客户端: Token 存储在 HttpOnly Cookie 中，无需手动存储
+      let response;
+      try {
+        // 嘗試 SRP 零知識登入（密碼不傳後端）
+        response = await zkLogin(normalizedEmail, password);
+      } catch (srpErr) {
+        // 若帳號尚未升級 SRP，fallback 至舊版並自動觸發升級
+        console.warn('[AppStore] SRP login failed, falling back to legacy', srpErr);
+        response = await zkLoginLegacy(normalizedEmail, password);
+      }
 
-      console.info('[AppStore] Login successful', { email: normalizedEmail });
       set({
-        authToken: 'web-client', // 标记为 web 客户端（token 在 cookie 中）
+        authToken: 'web-client',
         authStatus: 'authenticated',
         userProfile: {
           displayName: response.user.displayName,
@@ -124,26 +131,15 @@ export const useAppStore = create<AppState>((set, get) => ({
           membershipLabel: response.user.membershipLabel || '',
         },
         authError: null,
-        preferences: {
-          baseCurrency: 'USD',
-          largeTransactionAlerts: false,
-          weeklyAiSummary: false,
-        },
+        preferences: { baseCurrency: 'USD', largeTransactionAlerts: false, weeklyAiSummary: false },
         aiInsights: [],
       });
 
-      // Auto-load Plaid data from backend
       try {
-        console.debug('[AppStore] Auto-loading Plaid finance data after login');
         const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
         await hydratePlaidFinanceData();
-        console.info('[AppStore] Plaid finance data auto-loaded after login');
-
-        // Record asset snapshot for performance tracking
-        const recordAssetSnapshot = useFinanceStore.getState().recordAssetSnapshot;
-        recordAssetSnapshot();
+        useFinanceStore.getState().recordAssetSnapshot();
       } catch (plaidError) {
-        // Plaid data loading is optional - don't fail the login if it fails
         console.warn('[AppStore] Failed to auto-load Plaid data after login', plaidError);
       }
     } catch (error) {
@@ -157,15 +153,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   signup: async (email: string, password: string) => {
     try {
       const normalizedEmail = email.toLowerCase().trim();
-      console.debug('[AppStore] Attempting signup', { email: normalizedEmail });
+      console.debug('[AppStore] Attempting ZK signup', { email: normalizedEmail });
       set({ authStatus: 'loading', authError: null });
 
-      const response = await registerUser(normalizedEmail, password);
-      // Web 客户端: Token 存储在 HttpOnly Cookie 中，无需手动存储
+      // ZK register：完成帳號後背景設定 SRP
+      const response = await zkRegister(normalizedEmail, password);
 
-      console.info('[AppStore] Signup successful', { email: normalizedEmail });
       set({
-        authToken: 'web-client', // 标记为 web 客户端（token 在 cookie 中）
+        authToken: 'web-client',
         authStatus: 'authenticated',
         userProfile: {
           displayName: response.user.displayName,
@@ -174,26 +169,15 @@ export const useAppStore = create<AppState>((set, get) => ({
           membershipLabel: response.user.membershipLabel || '',
         },
         authError: null,
-        preferences: {
-          baseCurrency: 'USD',
-          largeTransactionAlerts: false,
-          weeklyAiSummary: false,
-        },
+        preferences: { baseCurrency: 'USD', largeTransactionAlerts: false, weeklyAiSummary: false },
         aiInsights: [],
       });
 
-      // Auto-load Plaid data from backend
       try {
-        console.debug('[AppStore] Auto-loading Plaid finance data after signup');
         const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
         await hydratePlaidFinanceData();
-        console.info('[AppStore] Plaid finance data auto-loaded after signup');
-
-        // Record asset snapshot for performance tracking
-        const recordAssetSnapshot = useFinanceStore.getState().recordAssetSnapshot;
-        recordAssetSnapshot();
+        useFinanceStore.getState().recordAssetSnapshot();
       } catch (plaidError) {
-        // Plaid data loading is optional - don't fail the signup if it fails
         console.warn('[AppStore] Failed to auto-load Plaid data after signup', plaidError);
       }
     } catch (error) {
@@ -207,18 +191,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   logout: async () => {
     try {
       console.info('[AppStore] Logging out');
-      // 调用后端登出 API，清除 HttpOnly Cookie
       await logoutUser();
-      
+      // 清除記憶體中的 Data Key（ZK 安全保證）
+      clearCryptoSession();
       set({
         authToken: null,
         authStatus: 'unauthenticated',
-        userProfile: {
-          displayName: '',
-          email: '',
-          avatarUrl: '',
-          membershipLabel: '',
-        },
+        userProfile: { displayName: '', email: '', avatarUrl: '', membershipLabel: '' },
         plaidLinkToken: null,
         authError: null,
       });
