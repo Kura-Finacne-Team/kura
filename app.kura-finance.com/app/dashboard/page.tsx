@@ -67,7 +67,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 lg:mb-6 w-full">
         
         {/* Total Assets Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 sm:p-4 lg:p-5 flex flex-col justify-between h-[60vh] min-h-[400px] max-h-[680px] w-full">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 sm:p-4 lg:p-5 flex flex-col justify-between h-[40vh] min-h-[267px] max-h-[453px] w-full">
           <div>
             <p className="text-gray-400 text-[11px] sm:text-xs lg:text-sm font-medium mb-1.5 sm:mb-2">Total Assets</p>
             <div className="flex items-baseline gap-3 flex-wrap">
@@ -129,7 +129,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Accounts Card */}
-        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 sm:p-4 lg:p-5 flex flex-col justify-between h-[60vh] min-h-[400px] max-h-[680px] overflow-y-auto w-full">
+        <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 sm:p-4 lg:p-5 flex flex-col justify-between h-[40vh] min-h-[267px] max-h-[453px] overflow-y-auto w-full">
           <div>
             <p className="text-gray-400 text-[11px] sm:text-xs lg:text-sm font-medium mb-1.5 sm:mb-2">Accounts</p>
             <div className="space-y-1 sm:space-y-2">
@@ -195,7 +195,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 w-full">
         
         {/* Investment Card */}
-        <div className="relative aspect-square w-3/4 mx-auto">
+        <div className="relative aspect-square w-full">
           <div className="absolute inset-0 rounded-2xl bg-[#1A1A24] border border-white/5 p-3 sm:p-4 lg:p-5 flex flex-col justify-between">
             <div>
               <p className="text-gray-400 text-[11px] sm:text-xs lg:text-sm font-medium mb-1.5 sm:mb-2">Investment</p>
@@ -209,7 +209,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Crypto Card */}
-        <div className="relative aspect-square w-3/4 mx-auto">
+        <div className="relative aspect-square w-full">
           <div className="absolute inset-0 rounded-2xl bg-[#1A1A24] border border-white/5 p-3 sm:p-4 lg:p-5 flex flex-col justify-between">
             <div>
               <p className="text-gray-400 text-[11px] sm:text-xs lg:text-sm font-medium mb-1.5 sm:mb-2">Crypto</p>
@@ -223,7 +223,7 @@ export default function DashboardPage() {
         </div>
 
         {/* DeFi Protocol Card */}
-        <div className="relative aspect-square w-3/4 mx-auto">
+        <div className="relative aspect-square w-full">
           <div className="absolute inset-0 rounded-2xl bg-[#1A1A24] border border-white/5 p-3 sm:p-4 lg:p-5 flex flex-col justify-between">
             <div>
               <p className="text-gray-400 text-[11px] sm:text-xs lg:text-sm font-medium mb-1.5 sm:mb-2">DeFi Protocol</p>
