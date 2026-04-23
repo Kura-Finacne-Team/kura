@@ -1,4 +1,4 @@
-// src/components/settings/PreferencesView.tsx
+// 偏好設定檢視
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
@@ -28,7 +28,7 @@ export default function PreferencesView({ variants }: { variants: Variants }) {
           <div className="flex justify-between items-center p-4 rounded-xl bg-[#1A1A24] border border-white/5">
             <div>
               <div className="text-white font-medium">Large Transactions</div>
-              {/* 💡 這裡把 > 換成了 &gt; 來避免 JSX 解析錯誤 */}
+              {/* 這裡把 > 換成 &gt; 以避免 JSX 解析錯誤 */}
               <div className="text-xs text-gray-500 mt-0.5">Alert on spends &gt; $500</div>
             </div>
             <SettingsToggle checked={preferences.largeTransactionAlerts} onClick={toggleLargeTransactionAlerts} />

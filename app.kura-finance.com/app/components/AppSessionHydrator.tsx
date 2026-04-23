@@ -13,7 +13,7 @@ export default function AppSessionHydrator() {
   const hydratePlaidFinanceData = useFinanceStore((state) => state.hydratePlaidFinanceData);
   const clearPlaidFinanceData = useFinanceStore((state) => state.clearPlaidFinanceData);
 
-  // Initialize auth state from storage on first load
+  // 首次載入時從儲存狀態初始化認證
   useEffect(() => {
     if (authStatus === 'loading' && !authToken) {
       void hydrateFromStorage();
@@ -37,7 +37,7 @@ export default function AppSessionHydrator() {
         try {
           await hydratePlaidFinanceData();
         } catch {
-          // Keep UI usable even when Plaid data API is temporarily unavailable.
+          // 即使 Plaid API 暫時不可用，也維持 UI 可用。
         }
       }
     })();

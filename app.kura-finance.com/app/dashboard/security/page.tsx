@@ -43,7 +43,7 @@ export default function SecurityPage() {
   return (
     <div className="w-full pb-10 px-8 pt-10">
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
+        {/* 頁面標題 */}
         <div className="mb-8">
           <button
             onClick={() => router.back()}
@@ -55,7 +55,7 @@ export default function SecurityPage() {
           <p className="text-gray-400 mt-2">Manage your security preferences and authentication methods</p>
         </div>
 
-        {/* Messages */}
+        {/* 訊息區 */}
         {successMessage && (
           <div className="mb-6 p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm">
             {successMessage}
@@ -67,7 +67,7 @@ export default function SecurityPage() {
           </div>
         )}
 
-        {/* Tabs */}
+        {/* 分頁 */}
         <div className="mb-8 flex gap-4 border-b border-white/10">
           <button
             onClick={() => setActiveTab('passkeys')}
@@ -101,7 +101,7 @@ export default function SecurityPage() {
           </button>
         </div>
 
-        {/* Passkeys Tab */}
+        {/* 通行金鑰分頁 */}
         {activeTab === 'passkeys' && (
           <div className="p-6 rounded-xl border border-white/10 bg-[#0B0B0F]">
             <h2 className="text-lg font-semibold text-white mb-2">Passkeys</h2>
@@ -111,7 +111,7 @@ export default function SecurityPage() {
           </div>
         )}
 
-        {/* 2FA Tab */}
+        {/* 2FA 分頁 */}
         {activeTab === '2fa' && (
           <div className="p-6 rounded-xl border border-white/10 bg-[#0B0B0F]">
             <h2 className="text-lg font-semibold text-white mb-2">Two-Factor Authentication</h2>
@@ -121,7 +121,7 @@ export default function SecurityPage() {
           </div>
         )}
 
-        {/* Password Tab */}
+        {/* 密碼分頁 */}
         {activeTab === 'password' && (
           <div className="p-6 rounded-xl border border-white/10 bg-[#0B0B0F]">
             <h2 className="text-lg font-semibold text-white mb-6">Change Password</h2>

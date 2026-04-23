@@ -1,4 +1,4 @@
-// src/app/dashboard/_components/TransactionsModal.tsx
+// 交易清單彈窗元件
 "use client";
 
 import React, { useState, useEffect } from 'react';

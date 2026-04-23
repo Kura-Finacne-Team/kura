@@ -22,7 +22,7 @@ export default function DownloadPage() {
 
   return (
     <div className="min-h-screen bg-[#0B0B0F] text-white flex flex-col">
-      {/* Header */}
+      {/* 頁首 */}
       <header className="border-b border-[#1A1A24] bg-[#0B0B0F]/80 backdrop-blur-md p-6 sticky top-0 z-40">
         <div className="max-w-6xl mx-auto flex items-center gap-2">
           <Image
@@ -36,11 +36,11 @@ export default function DownloadPage() {
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* 主要內容 */}
       <main className="flex-1 flex items-center justify-center p-6">
         {deviceType === 'ios' && (
           <div className="w-full max-w-md space-y-8">
-            {/* iOS Content */}
+            {/* iOS 內容 */}
             <div className="text-center space-y-4 mb-8">
               <div className="flex justify-center mb-6">
                 <Image
@@ -57,7 +57,7 @@ export default function DownloadPage() {
               </p>
             </div>
 
-            {/* Download Button */}
+            {/* 下載按鈕 */}
             <div className="space-y-4">
               <a
                 href="https://apps.apple.com/app/kura-finance/id6503625647"
@@ -75,7 +75,7 @@ export default function DownloadPage() {
               </p>
             </div>
 
-            {/* Features */}
+            {/* 功能特色 */}
             <div className="space-y-4 pt-8 border-t border-white/10">
               <h2 className="text-xl font-bold">Features</h2>
               <ul className="space-y-3 text-gray-400">
@@ -102,7 +102,7 @@ export default function DownloadPage() {
 
         {deviceType === 'android' && (
           <div className="w-full max-w-md space-y-8">
-            {/* Android Content */}
+            {/* Android 內容 */}
             <div className="text-center space-y-4 mb-8">
               <div className="flex justify-center mb-6">
                 <Image
@@ -119,7 +119,7 @@ export default function DownloadPage() {
               </p>
             </div>
 
-            {/* Download Button */}
+            {/* 下載按鈕 */}
             <div className="space-y-4">
               <a
                 href="https://play.google.com/store/apps/details?id=com.kurafinance.app"
@@ -137,7 +137,7 @@ export default function DownloadPage() {
               </p>
             </div>
 
-            {/* Features */}
+            {/* 功能特色 */}
             <div className="space-y-4 pt-8 border-t border-white/10">
               <h2 className="text-xl font-bold">Features</h2>
               <ul className="space-y-3 text-gray-400">
@@ -164,7 +164,7 @@ export default function DownloadPage() {
 
         {deviceType === 'desktop' && (
           <div className="w-full max-w-2xl space-y-8">
-            {/* Desktop Content */}
+            {/* 桌面版內容 */}
             <div className="text-center space-y-4 mb-8">
               <h1 className="text-5xl font-bold tracking-tight">Kura Finance</h1>
               <p className="text-gray-400 text-xl">
@@ -172,9 +172,9 @@ export default function DownloadPage() {
               </p>
             </div>
 
-            {/* Platform Options */}
+            {/* 平台選項 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* iOS Card */}
+              {/* iOS 卡片 */}
               <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#1A1A24]/40 to-[#0B0B0F]/40 backdrop-blur-xl p-8 space-y-6 hover:border-[#8B5CF6]/30 transition-colors">
                 <div className="flex justify-center">
                   <Image
@@ -199,7 +199,7 @@ export default function DownloadPage() {
                 </a>
               </div>
 
-              {/* Android Card */}
+              {/* Android 卡片 */}
               <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#1A1A24]/40 to-[#0B0B0F]/40 backdrop-blur-xl p-8 space-y-6 hover:border-[#8B5CF6]/30 transition-colors">
                 <div className="flex justify-center">
                   <Image
@@ -225,7 +225,7 @@ export default function DownloadPage() {
               </div>
             </div>
 
-            {/* Web App Info */}
+            {/* Web App 資訊 */}
             <div className="rounded-3xl border border-[#8B5CF6]/30 bg-[#8B5CF6]/5 p-8 text-center space-y-3">
               <h2 className="text-xl font-bold">Or Use the Web App</h2>
               <p className="text-gray-400">
@@ -254,7 +254,7 @@ export default function DownloadPage() {
         )}
       </main>
 
-      {/* Footer */}
+      {/* 頁尾 */}
       <footer className="border-t border-[#1A1A24] bg-[#0B0B0F]/50 p-6">
         <div className="max-w-6xl mx-auto text-center text-gray-500 text-sm">
           © 2026 Kura Finance. All rights reserved.

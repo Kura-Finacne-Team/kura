@@ -1,4 +1,4 @@
-// src/app/dashboard/page.tsx
+// dashboard 首頁
 "use client";
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -31,19 +31,19 @@ export default function DashboardPage() {
     }, 0);
   }, [accounts]);
 
-  // Get recent transactions (last 5)
+  // 取得最近交易（最近 5 筆）
   const recentTransactions = useMemo(() => {
     return [...transactions]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5);
   }, [transactions]);
 
-  // Fetch asset history from API on mount
+  // 元件掛載時從 API 取得資產歷史
   useEffect(() => {
     hydrateAssetHistory(30);
   }, [hydrateAssetHistory]);
 
-  // Format API asset history for chart
+  // 將 API 資產歷史轉為圖表格式
   const chartData = useMemo(() => {
     return apiAssetHistory.map(point => ({
       time: new Date(point.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -63,10 +63,10 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* Top Section - Total Assets & Accounts */}
+      {/* 上半區塊：總資產與帳戶 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 lg:mb-6 w-full">
         
-        {/* Total Assets Card */}
+        {/* 總資產卡片 */}
         <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 sm:p-4 lg:p-5 flex flex-col justify-between h-[40vh] min-h-[267px] max-h-[453px] w-full">
           <div>
             <p className="text-gray-400 text-[11px] sm:text-xs lg:text-sm font-medium mb-1.5 sm:mb-2">Total Assets</p>
@@ -84,7 +84,7 @@ export default function DashboardPage() {
             </div>
           </div>
           
-          {/* Chart */}
+          {/* 圖表 */}
           {isLoadingAssetHistory ? (
             <div className="flex-1 flex items-end mt-1.5 sm:mt-2 min-h-[80px]">
               <div className="w-full h-full rounded-xl bg-white/5 animate-pulse" />
@@ -128,7 +128,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Accounts Card */}
+        {/* 帳戶卡片 */}
         <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-3 sm:p-4 lg:p-5 flex flex-col justify-between h-[40vh] min-h-[267px] max-h-[453px] overflow-y-auto w-full">
           <div>
             <p className="text-gray-400 text-[11px] sm:text-xs lg:text-sm font-medium mb-1.5 sm:mb-2">Accounts</p>
@@ -147,7 +147,7 @@ export default function DashboardPage() {
 
                 return (
                   <div key={account.id} className="flex justify-between items-center py-2 sm:py-2.5 border-b border-white/5 last:border-0 gap-2">
-                    {/* Account Logo or Initial */}
+                    {/* 帳戶 Logo 或名稱首字 */}
                     <div className="w-7 sm:w-8 h-7 sm:h-8 flex-shrink-0 rounded-full bg-white flex items-center justify-center overflow-hidden">
                       {account.logo ? (
                         <Image
@@ -167,7 +167,7 @@ export default function DashboardPage() {
                         </span>
                       )}
                     </div>
-                    {/* Account Type + Mask and Balance */}
+                    {/* 帳戶類型 + 尾碼與餘額 */}
                     <div className="flex-1 min-w-0">
                       <p className="text-white font-medium text-xs sm:text-sm truncate">{accountDisplayName}</p>
                     </div>
@@ -191,10 +191,10 @@ export default function DashboardPage() {
 
       </div>
 
-      {/* Bottom Section - Investment, Crypto, DeFi Protocol */}
+      {/* 下半區塊：投資、加密資產、DeFi 協議 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 w-full">
         
-        {/* Investment Card */}
+        {/* 投資卡片 */}
         <div className="relative aspect-square w-full">
           <div className="absolute inset-0 rounded-2xl bg-[#1A1A24] border border-white/5 p-3 sm:p-4 lg:p-5 flex flex-col justify-between">
             <div>
@@ -208,7 +208,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Crypto Card */}
+        {/* 加密資產卡片 */}
         <div className="relative aspect-square w-full">
           <div className="absolute inset-0 rounded-2xl bg-[#1A1A24] border border-white/5 p-3 sm:p-4 lg:p-5 flex flex-col justify-between">
             <div>
@@ -222,7 +222,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* DeFi Protocol Card */}
+        {/* DeFi 協議卡片 */}
         <div className="relative aspect-square w-full">
           <div className="absolute inset-0 rounded-2xl bg-[#1A1A24] border border-white/5 p-3 sm:p-4 lg:p-5 flex flex-col justify-between">
             <div>
@@ -238,7 +238,7 @@ export default function DashboardPage() {
 
       </div>
 
-      {/* Recent Transactions Section */}
+      {/* 最近交易區塊 */}
       <div className="w-full">
         <div className="rounded-2xl bg-[#1A1A24] border border-white/5 p-4 sm:p-5 lg:p-6 w-full">
           <h3 className="text-base sm:text-lg lg:text-xl font-bold text-white mb-3 sm:mb-4">Recent Transactions</h3>

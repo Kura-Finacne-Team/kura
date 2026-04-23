@@ -1,4 +1,4 @@
-// src/app/layout.tsx
+// 應用程式根版面配置
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
@@ -53,7 +53,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Viewport & Mobile */}
+        {/* 視窗與行動裝置設定 */}
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -61,8 +61,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Kura" />
         <meta name="theme-color" content="#8B5CF6" />
 
-        {/* CSP is set via middleware.ts - no need for meta tag */}
-        {/* Load Plaid Link script globally - PlaidProvider handles detection */}
+        {/* CSP 由 `middleware.ts` 設定，這裡不需要 meta 標籤 */}
+        {/* 全域載入 Plaid Link 腳本，實際偵測由 `PlaidProvider` 處理 */}
         <Script
           src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"
           strategy="beforeInteractive"
@@ -70,10 +70,10 @@ export default function RootLayout({
       </head>
       <body className="w-full h-screen bg-[#0B0B0F] text-white flex flex-col antialiased selection:bg-[#8B5CF6]/30">
         
-        {/* 💡 用 Provider 包住整個應用程式，確保 Navbar 也能讀取錢包狀態 */}
+        {/* 用 provider 包住整個應用程式，確保導覽列也能讀取錢包狀態 */}
         <PlaidProvider>
           <Web3ModalProvider>
-            {/* 把空間完全交給 children (也就是 dashboard 的 layout) */}
+            {/* 版面空間完全交給 children（也就是 dashboard 版面） */}
             <div className="flex flex-col flex-1 overflow-hidden w-full h-full">
               {children}
             </div>

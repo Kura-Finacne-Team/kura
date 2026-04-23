@@ -1,4 +1,4 @@
-// src/components/TopNav.tsx
+// 頂部導覽列元件
 "use client";
 
 import React, { useRef, useState } from 'react';
@@ -15,7 +15,7 @@ export default function TopNav() {
   const displayName = userProfile.displayName.trim();
   const avatarInitial = displayName ? displayName.slice(0, 1).toUpperCase() : '?';
 
-  // Only show header when authenticated
+  // 僅在已認證時顯示導覽列
   if (authStatus !== 'authenticated') {
     return null;
   }

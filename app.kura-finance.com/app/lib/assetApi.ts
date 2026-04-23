@@ -1,14 +1,14 @@
 /**
- * Asset History API Service
- * Fetches server-side asset history for the dashboard chart
+ * 資產歷史 API 服務
+ * 由伺服器提供資產歷史資料給儀表板圖表使用
  */
 
 import { requestJson } from './httpClient';
 
-// ============= Types =============
+// ============= 型別定義 =============
 
 export interface AssetHistoryPoint {
-  timestamp: string; // ISO 8601
+  timestamp: string; // ISO 8601 時間字串
   value: number;
   name: string;
   type: string;
@@ -29,7 +29,7 @@ export interface AssetHistoryResponse {
   summary: AssetHistorySummary;
 }
 
-// ============= Request Handler =============
+// ============= 請求處理器 =============
 
 async function assetRequest<T>(
   path: string,
@@ -38,11 +38,11 @@ async function assetRequest<T>(
   return requestJson<T>(path, options, 'AssetAPI');
 }
 
-// ============= Public API =============
+// ============= 公開 API =============
 
 /**
- * Fetch asset history for the given number of past days.
- * 取得過去 N 天的資產歷史紀錄，用於 dashboard 折線圖
+ * 取得指定天數內的資產歷史資料
+ * 取得過去 N 天的資產歷史紀錄，用於儀表板折線圖
  */
 export const fetchAssetHistory = (days: number = 30): Promise<AssetHistoryResponse> => {
   return assetRequest<AssetHistoryResponse>(

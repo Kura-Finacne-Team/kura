@@ -80,7 +80,7 @@ export default function AccountsView({ variants, onConnectAccount }: AccountsVie
           try {
             await disconnectAsync();
           } catch {
-            // Even if wallet provider disconnect fails, keep UI/store state consistent.
+            // 即使錢包 provider 斷線失敗，仍維持 UI / store 狀態一致。
           }
         }
 

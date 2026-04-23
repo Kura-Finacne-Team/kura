@@ -2,31 +2,31 @@ import { create } from 'zustand';
 import { InvestmentAccount, Investment } from './useFinanceStore';
 
 interface Web3WalletState {
-  // Web3 Wallet 專用数据
+  // Web3 Wallet 專用資料
   walletAccounts: InvestmentAccount[];
   walletInvestments: Investment[];
   
-  // Actions
+  // 操作
   addWalletPosition: (account: InvestmentAccount, investment: Investment) => void;
   removeWalletPosition: (accountId: string, investmentId: string) => void;
   clearAll: () => void;
   
-  // Selectors
+  // 選擇器
   getTotalWalletValue: () => number;
   getWalletAccountIds: () => string[];
   getWalletInvestmentIds: () => string[];
 }
 
 export const useWeb3WalletStore = create<Web3WalletState>((set, get) => ({
-  // Initial State
+  // 初始狀態
   walletAccounts: [],
   walletInvestments: [],
   
-  // Actions
+  // 操作
   addWalletPosition: (account: InvestmentAccount, investment: Investment) => {
     const { walletAccounts, walletInvestments } = get();
     
-    console.debug('[Web3WalletStore] ➕ Adding wallet position:', {
+    console.debug('[Web3WalletStore] Adding wallet position:', {
       accountId: account.id,
       investmentId: investment.id,
       symbol: investment.symbol,
@@ -48,7 +48,7 @@ export const useWeb3WalletStore = create<Web3WalletState>((set, get) => ({
   removeWalletPosition: (accountId: string, investmentId: string) => {
     const { walletAccounts, walletInvestments } = get();
     
-    console.debug('[Web3WalletStore] ➖ Removing wallet position:', {
+    console.debug('[Web3WalletStore] Removing wallet position:', {
       accountId,
       investmentId,
     });
@@ -60,14 +60,14 @@ export const useWeb3WalletStore = create<Web3WalletState>((set, get) => ({
   },
   
   clearAll: () => {
-    console.warn('[Web3WalletStore] 🗑️ Clearing all Web3 wallet data');
+    console.warn('[Web3WalletStore] Clearing all Web3 wallet data');
     set({
       walletAccounts: [],
       walletInvestments: [],
     });
   },
   
-  // Selectors
+  // 選擇器
   getTotalWalletValue: () => {
     const { walletInvestments } = get();
     return walletInvestments.reduce(

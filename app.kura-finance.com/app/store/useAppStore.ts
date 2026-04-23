@@ -43,7 +43,7 @@ interface AppState {
   authToken: string | null;
   authError: string | null;
 
-  // Auth methods
+  // 認證方法
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   changePassword: (newPassword: string) => Promise<void>;
@@ -53,7 +53,7 @@ interface AppState {
   verifyRegistration: (email: string, password: string, verificationCode: string) => Promise<void>;
   hydrateFromStorage: () => Promise<void>;
 
-  // User methods
+  // 使用者方法
   setDisplayName: (displayName: string) => Promise<void>;
   setBaseCurrency: (currency: BaseCurrency) => void;
   toggleLargeTransactionAlerts: () => void;
@@ -62,7 +62,7 @@ interface AppState {
   clearAuthSession: () => void;
   hydrateUserProfile: () => Promise<void>;
 
-  // Plaid methods
+  // Plaid 方法
   requestPlaidLinkToken: () => Promise<string | null>;
   confirmPlaidExchange: (publicToken: string, institutionName?: string) => Promise<void>;
   disconnectPlaidAccount: (accountId: string) => Promise<void>;
@@ -85,7 +85,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   authToken: null,
   authError: null,
 
-  // Auth methods
+  // 認證方法
   login: async (email: string, password: string) => {
     try {
       const normalizedEmail = email.toLowerCase().trim();
@@ -145,7 +145,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       console.debug('[AppStore] Changing password (SRP)');
       const email = get().userProfile?.email;
-      if (!email) throw new Error('未取得目前用戶信箱');
+      if (!email) throw new Error('Current user email is missing.');
       await zkChangePassword(email, newPassword);
       console.info('[AppStore] Password changed successfully');
     } catch (error) {
@@ -173,7 +173,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       await zkResetPassword(email, resetCode, newPassword);
       console.info('[AppStore] Password reset successfully');
       
-      // 因為舊 Data Key 已失效，系統需要登出讓用戶重新登入
+      // 由於舊 Data Key 已失效，系統需要登出以重新建立安全工作階段
       get().clearAuthSession();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Password reset failed';
@@ -198,11 +198,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       console.debug('[AppStore] Verifying registration', { email });
       const response = await zkVerifyRegistration(email, password, verificationCode);
-      // Web 客户端: Token 存储在 HttpOnly Cookie 中，无需手动存储
+      // Web 客戶端：Token 儲存在 HttpOnly Cookie 中，無需手動儲存
 
       console.info('[AppStore] Registration confirmed successfully');
       set({
-        authToken: 'web-client', // 标记为 web 客户端（token 在 cookie 中）
+        authToken: 'web-client', // 標記為 web 客戶端（token 在 cookie 中）
         authStatus: 'authenticated',
         userProfile: {
           displayName: response.user.displayName,
@@ -218,7 +218,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         },
       });
 
-      // Auto-load Plaid data from backend
+      // 自動載入後端 Plaid 資料
       try {
         console.debug('[AppStore] Auto-loading Plaid finance data after registration confirmation');
         const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
@@ -239,20 +239,20 @@ export const useAppStore = create<AppState>((set, get) => ({
       console.debug('[AppStore] Hydrating from storage');
       set({ authStatus: 'loading' });
 
-      // Only run on client-side
+      // 僅在客戶端執行
       if (typeof window === 'undefined') {
         set({ authStatus: 'unauthenticated', authError: null });
         return;
       }
 
-      // Web 客户端: Token 在 HttpOnly Cookie 中，尝试直接调用 API
+      // Web 客戶端：Token 在 HttpOnly Cookie 中，直接嘗試呼叫 API
       console.debug('[AppStore] Web client - attempting to fetch profile from cookie');
       try {
         const response = await fetchCurrentUserProfile();
 
         console.info('[AppStore] Profile fetched successfully');
         set({
-          authToken: 'web-client', // 标记为 web 客户端（token 在 cookie 中）
+          authToken: 'web-client', // 標記為 web 客戶端（token 在 cookie 中）
           authStatus: 'authenticated',
           userProfile: {
             displayName: response.user.displayName,
@@ -268,7 +268,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           },
         });
 
-        // Auto-load Plaid data from backend
+        // 自動載入後端 Plaid 資料
         try {
           console.debug('[AppStore] Auto-loading Plaid finance data');
           const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
@@ -278,7 +278,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           console.warn('[AppStore] Failed to auto-load Plaid data', plaidError);
         }
       } catch {
-        // No valid cookie or session
+        // 無有效 cookie 或 session
         console.info('[AppStore] No valid session found');
         set({ authStatus: 'unauthenticated', authError: null, authToken: null });
       }
@@ -288,7 +288,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  // User methods
+  // 使用者方法
   setDisplayName: async (displayName) => {
     try {
       console.debug('[AppStore] Updating display name', { displayName });
@@ -360,19 +360,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  // Plaid methods
+  // Plaid 方法
   requestPlaidLinkToken: async () => {
     try {
       console.debug('[AppStore] Requesting Plaid link token');
       const result = await createPlaidLinkToken();
       console.debug('[AppStore] Plaid API response received', { result });
 
-      // Handle both { link_token } and { token } response formats
-      const fallbackToken =
-        typeof (result as { token?: unknown }).token === 'string'
-          ? (result as { token: string }).token
-          : undefined;
-      const token = result.link_token || fallbackToken;
+      // 同時支援 { link_token } 與 { token } 兩種回傳格式
+      const token = result.link_token ?? result.token;
       if (!token) {
         console.error('[AppStore] No link token in response', { result });
         throw new Error('No link token returned from backend');
@@ -401,11 +397,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       console.info('[AppStore] Plaid token exchanged successfully', { result });
 
-      // Load the updated finance data
+      // 載入更新後的財務資料
       const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
       await hydratePlaidFinanceData();
 
-      // Clear the link token
+      // 清除 link token
       set({ plaidLinkToken: null });
       console.info('[AppStore] Finance data reloaded after Plaid exchange');
     } catch (error) {
@@ -422,11 +418,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       const result = await disconnectPlaidAccountApi(accountId);
       console.info('[AppStore] Plaid account disconnected successfully', { result });
 
-      // Update local state to remove the account
+      // 更新本地 state 以移除帳戶
       const disconnectBankingAccount = useFinanceStore.getState().disconnectBankingAccount;
       await disconnectBankingAccount(accountId);
 
-      // Reload the updated finance data
+      // 重新載入更新後的財務資料
       const hydratePlaidFinanceData = useFinanceStore.getState().hydratePlaidFinanceData;
       await hydratePlaidFinanceData();
     } catch (error) {

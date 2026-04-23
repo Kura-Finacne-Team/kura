@@ -1,4 +1,4 @@
-// src/components/ConnectAccountModal.tsx
+// 連結帳戶彈窗元件
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -28,7 +28,7 @@ interface PlaidLinkError {
 }
 
 /**
- * Inner modal content component - only rendered when Plaid is ready
+ * 內層彈窗內容元件 - 僅在 Plaid 準備完成時渲染
  */
 function ConnectAccountModalContent({
   isOpen,
@@ -66,12 +66,12 @@ function ConnectAccountModalContent({
 
         console.info('[ConnectAccountModal] Public token exchanged successfully');
 
-        // Load updated finance data
+        // 載入更新後的財務資料
         try {
           await hydratePlaidFinanceData();
           console.info('[ConnectAccountModal] Finance data reloaded');
         } catch (reloadError) {
-          // If reload fails, still consider exchange successful - user can refresh manually
+          // 若重載失敗，仍視為交換成功，使用者可手動重新整理
           console.warn('[ConnectAccountModal] Finance data reload failed, but exchange succeeded', reloadError);
         }
 
@@ -112,7 +112,7 @@ function ConnectAccountModalContent({
     [authToken, hydratePlaidFinanceData, onClose]
   );
 
-  // Initialize Plaid Link hook - this will work because we only render this component when Plaid is ready
+  // 初始化 Plaid Link hook（僅在 Plaid ready 後渲染，因此可安全執行）
   const { open: openPlaid, ready: isPlaidReady } = usePlaidLink({
     token: linkToken,
     onSuccess: onPlaidSuccess,
@@ -185,26 +185,26 @@ function ConnectAccountModalContent({
     setIsConnecting('plaid');
 
     try {
-      // Fetch token if needed
+      // 必要時先取得 token
       if (!linkToken) {
         console.debug('[ConnectAccountModal] Fetching link token');
         await fetchPlaidLinkToken();
 
-        // Re-check if token was successfully fetched
+        // 再次確認 token 是否成功取得
         if (!linkToken) {
           setPlaidError('Failed to load Plaid Link. Please check your connection and try again.');
           return;
         }
       }
 
-      // Check if Plaid SDK is ready
+      // 檢查 Plaid SDK 是否已就緒
       if (!isPlaidReady) {
         setPlaidError('Plaid is still initializing. Please wait and try again.');
         console.warn('[ConnectAccountModal] Plaid SDK not ready when attempting to open');
         return;
       }
 
-      // Open Plaid Link
+      // 開啟 Plaid Link
       console.debug('[ConnectAccountModal] Opening Plaid Link UI');
       openPlaid();
     } catch (error) {
@@ -259,7 +259,7 @@ function ConnectAccountModalContent({
             break;
           }
         } catch {
-          // Try next injected connector.
+          // 嘗試下一個 injected connector。
         }
       }
 
@@ -275,7 +275,7 @@ function ConnectAccountModalContent({
       const message = walletError.message?.toLowerCase() || '';
 
       if (walletError.code === 4001 || message.includes('user rejected') || message.includes('rejected')) {
-        // User cancelled connection intentionally; keep UI quiet.
+        // 使用者主動取消連線，維持安靜不提示。
       } else if (message.includes('provider') && message.includes('not found')) {
         setPlaidError('Wallet provider not found. Please open or install your wallet extension and refresh.');
       } else {
@@ -400,14 +400,14 @@ function ConnectAccountModalContent({
 }
 
 /**
- * Wrapper component that only renders modal when Plaid SDK is ready
+ * 包裝元件 - 僅在 Plaid SDK 就緒時渲染彈窗
  */
 export default function ConnectAccountModal(props: ConnectAccountModalProps) {
   const [mounted, setMounted] = useState(false);
   const { isPlaidReady, plaidError: plaidSdkError } = usePlaidReady();
   const linkToken = useAppStore((state) => state.plaidLinkToken);
 
-  // Mount state for SSR safety
+  // SSR 安全：僅在 mounted 後渲染
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 0);
     return () => clearTimeout(timer);

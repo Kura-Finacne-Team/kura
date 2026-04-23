@@ -1,7 +1,7 @@
 /**
- * Authentication API Service
- * Web 客户端 - 使用 HttpOnly Cookie
- * 根据认证系统指南实现
+ * 認證 API 服務
+ * Web 客戶端 - 使用 HttpOnly Cookie
+ * 根據認證系統指南實作
  */
 
 import { requestJson } from './httpClient';
@@ -22,9 +22,9 @@ export interface AuthResponse {
 }
 
 /**
- * Web 客户端 API 请求
- * 自动包含 X-Client-Type: web 和 credentials: 'include'
- * Token 通过 HttpOnly Cookie 自动发送
+ * Web 客戶端 API 請求
+ * 自動包含 X-Client-Type: web 與 credentials: 'include'
+ * Token 透過 HttpOnly Cookie 自動送出
  */
 async function apiRequest<T>(
   path: string,
@@ -34,8 +34,8 @@ async function apiRequest<T>(
 }
 
 /**
- * 用户登出
- * Web 客户端: 清除 HttpOnly Cookie
+ * 使用者登出
+ * Web 客戶端：清除 HttpOnly Cookie
  */
 export const logoutUser = (): Promise<{ message: string }> => {
   return apiRequest<{ message: string }>('/api/auth/logout', {
@@ -44,8 +44,8 @@ export const logoutUser = (): Promise<{ message: string }> => {
 };
 
 /**
- * 获取当前用户资料
- * Cookie 会自动发送，无需手动传递 token
+ * 取得目前使用者資料
+ * Cookie 會自動送出，無需手動傳遞 token
  */
 export const fetchCurrentUserProfile = (): Promise<{ user: BackendUserProfile }> => {
   return apiRequest<{ user: BackendUserProfile }>('/api/auth/me', {
@@ -54,8 +54,8 @@ export const fetchCurrentUserProfile = (): Promise<{ user: BackendUserProfile }>
 };
 
 /**
- * 更新当前用户资料
- * Cookie 会自动发送，无需手动传递 token
+ * 更新目前使用者資料
+ * Cookie 會自動送出，無需手動傳遞 token
  */
 export const updateCurrentUserProfile = (
   payload: { displayName?: string; avatarUrl?: string }
@@ -70,7 +70,7 @@ export const updateCurrentUserProfile = (
 };
 
 /**
- * 改变密码 (SRP)
+ * 變更密碼 (SRP)
  */
 export const changePassword = (
   srpSalt: string,
@@ -88,7 +88,7 @@ export const changePassword = (
 };
 
 /**
- * 忘记密码 - 发送重置码
+ * 忘記密碼 - 發送重設碼
  */
 export const requestPasswordReset = (email: string): Promise<{ message: string; expiresIn?: number }> => {
   const normalizedEmail = email.toLowerCase().trim();
@@ -100,7 +100,7 @@ export const requestPasswordReset = (email: string): Promise<{ message: string; 
 };
 
 /**
- * 忘记密码 - 验证重置码并重设 SRP (SRP)
+ * 忘記密碼 - 驗證重設碼並重設 SRP
  */
 export const resetPassword = (
   email: string,
@@ -117,7 +117,7 @@ export const resetPassword = (
 };
 
 /**
- * 用户注册 - 第一步：请求注册令牌
+ * 使用者註冊 - 第一步：請求註冊驗證碼
  */
 export const requestRegistrationCode = (email: string): Promise<{ message: string }> => {
   const normalizedEmail = email.toLowerCase().trim();
@@ -128,7 +128,7 @@ export const requestRegistrationCode = (email: string): Promise<{ message: strin
 };
 
 /**
- * 用户注册 - 第二步：确认注册
+ * 使用者註冊 - 第二步：驗證註冊
  */
 export const verifyRegistration = (
   email: string,

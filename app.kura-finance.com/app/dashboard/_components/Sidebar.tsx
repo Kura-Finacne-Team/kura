@@ -1,4 +1,4 @@
-// src/app/dashboard/_components/Sidebar.tsx
+// dashboard 側邊導覽元件
 "use client";
 
 import React from 'react';
@@ -44,13 +44,13 @@ export default function Sidebar() {
   return (
     <nav className="relative z-10 w-56 border-r border-[#1A1A24] bg-[#0B0B0F] py-6 px-2 flex flex-col gap-0 shrink-0 transition-all duration-300 ease-in-out h-full overflow-hidden">
       
-      {/* Home */}
+      {/* 首頁 */}
       <NavLink href="/dashboard" label="Home" isActive={isHome} />
       
-      {/* Divider */}
+      {/* 分隔線 */}
       <div className="my-3 border-t border-gray-800" />
 
-      {/* Main Section */}
+      {/* 主要區段 */}
       <div className="space-y-2 mb-3">
         <NavLink href="/dashboard/accounts" label="Accounts" isActive={isAccounts} />
         <NavLink href="/dashboard/transactions" label="Transactions" isActive={isTransactions} />
@@ -58,20 +58,20 @@ export default function Sidebar() {
         <NavLink href="/dashboard/defi-protocol" label="DeFi Protocol" isActive={isDefiProtocol} />
       </div>
 
-      {/* Divider */}
+      {/* 分隔線 */}
       <div className="my-3 border-t border-gray-800" />
 
-      {/* Secondary Section */}
+      {/* 次要區段 */}
       <div className="space-y-2">
         <NavLink href="/dashboard/budget" label="Budget" isActive={isBudget} />
         <NavLink href="/dashboard/impermanent-loss" label="Impermanent Loss" isActive={isImpermanentLoss} />
         <NavLink href="/dashboard/tax-calculator" label="Tax Calculator" isActive={isTaxCalculator} />
       </div>
 
-      {/* Divider */}
+      {/* 分隔線 */}
       <div className="my-3 border-t border-gray-800" />
 
-      {/* Tertiary Section */}
+      {/* 第三區段 */}
       <div className="space-y-2">
         <NavLink href="/dashboard/did" label="Kura DID" isActive={isDid} />
         <NavLink href="/dashboard/klhs" label="KLHS" isActive={isKLHS} />

@@ -1,4 +1,4 @@
-// src/app/dashboard/investment/page.tsx
+// investment 頁面
 "use client";
 
 import React, { useMemo, useRef, useState, useEffect } from 'react';
@@ -6,30 +6,30 @@ import { useFinanceStore } from '@/store/useFinanceStore';
 import { useWeb3WalletStore } from '@/store/useWeb3WalletStore';
 import { useExchangeStore } from '@/store/useExchangeStore';
 import Image from 'next/image';
-import ConnectAccountModal from '@/components/ConnectAccountModal'; // 💡 引入連線 Modal
+import ConnectAccountModal from '@/components/ConnectAccountModal'; // 引入連線彈窗
 import { useAccount, useBalance, useChainId, useChains } from 'wagmi';
 import { formatUnits } from 'viem';
 
 const CHART_COLORS = ['#8B5CF6', '#6366F1', '#EC4899', '#3B82F6', '#A855F7', '#14B8A6'];
 
 export default function InvestmentPage() {
-  // Finance Store (Plaid/Broker/Exchange)
+  // Finance Store（Plaid / Broker / Exchange）
   const financeInvestmentAccounts = useFinanceStore(state => state.investmentAccounts);
   const financeInvestments = useFinanceStore(state => state.investments);
   const syncConnectedWalletPosition = useFinanceStore(state => state.syncConnectedWalletPosition);
   const removeConnectedWalletPosition = useFinanceStore(state => state.removeConnectedWalletPosition);
 
-  // Web3 Wallet Store
+  // Web3 Wallet Store 資料
   const walletAccounts = useWeb3WalletStore(state => state.walletAccounts);
   const walletInvestments = useWeb3WalletStore(state => state.walletInvestments);
   const clearWeb3Wallet = useWeb3WalletStore(state => state.clearAll);
   const addWalletPosition = useWeb3WalletStore(state => state.addWalletPosition);
 
-  // Exchange Store
+  // Exchange Store 資料
   const exchangeInvestmentAccounts = useExchangeStore(state => state.exchangeInvestmentAccounts);
   const exchangeInvestments = useExchangeStore(state => state.exchangeInvestments);
 
-  // Combine data from all three stores
+  // 合併三個 store 的資料
   const investmentAccounts = useMemo(
     () => [...financeInvestmentAccounts, ...walletAccounts, ...exchangeInvestmentAccounts],
     [financeInvestmentAccounts, walletAccounts, exchangeInvestmentAccounts]
@@ -52,7 +52,7 @@ export default function InvestmentPage() {
   
   const [hoveredAsset, setHoveredAsset] = useState<string | null>(null);
   
-  // 💡 控制連線 Modal 的狀態
+  // 控制連線彈窗狀態
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function InvestmentPage() {
       nativeBalance,
     });
 
-    // Also sync to Web3 Wallet Store
+    // 同步到 Web3 Wallet Store
     const normalizedAddress = address.toLowerCase();
     const accountId = `wallet-${chainId}-${normalizedAddress}`;
     const investmentId = `wallet-native-${chainId}-${normalizedAddress}`;
@@ -89,7 +89,7 @@ export default function InvestmentPage() {
       symbol: nativeBalanceData.symbol,
       name: activeChainName,
       holdings: nativeBalance,
-      currentPrice: 0, // Will be fetched by finance store
+      currentPrice: 0, // 之後由 finance store 補上價格
       change24h: 0,
       type: 'crypto' as const,
       logo: 'https://www.google.com/s2/favicons?domain=ethereum.org&sz=128',
@@ -119,7 +119,7 @@ export default function InvestmentPage() {
     lastConnectedWalletRef.current = null;
   }, [isConnected, removeConnectedWalletPosition, clearWeb3Wallet]);
 
-  // 1. 計算每個投資帳戶 (Broker/Wallet) 的總餘額
+  // 1. 計算每個投資帳戶（Broker / Wallet）的總餘額
   const brokersWithBalances = useMemo(() => {
     return investmentAccounts.map(account => {
       const accountAssets = investments.filter(inv => inv.accountId === account.id);
@@ -181,7 +181,7 @@ export default function InvestmentPage() {
   return (
     <div className="max-w-6xl mx-auto pb-10 animate-in fade-in duration-500">
       
-      {/* 掛載 Modal */}
+      {/* 掛載連線彈窗 */}
       <ConnectAccountModal 
         isOpen={isConnectModalOpen} 
         onClose={() => setIsConnectModalOpen(false)} 
@@ -267,7 +267,7 @@ export default function InvestmentPage() {
             </div>
           ))}
           
-          {/* 💡 觸發 Modal 的按鈕 */}
+          {/* 觸發連線彈窗的按鈕 */}
           <button 
             onClick={() => setIsConnectModalOpen(true)}
             className="snap-start shrink-0 w-[220px] rounded-2xl border-2 border-dashed border-[#1A1A24] bg-[#0B0B0F]/50 flex flex-col items-center justify-center transition-all duration-300 hover:border-[#8B5CF6] hover:bg-[#8B5CF6]/5 group cursor-pointer"
@@ -284,7 +284,7 @@ export default function InvestmentPage() {
       {/* 投資列表 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* 左側：Crypto */}
+        {/* 左側：加密資產 */}
         <div className="rounded-3xl bg-[#0B0B0F] border border-white/5 p-6 flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2"><span className="text-[#8B5CF6]">₿</span> Crypto</h2>
@@ -328,7 +328,7 @@ export default function InvestmentPage() {
           </div>
         </div>
 
-        {/* 右側：Stocks */}
+        {/* 右側：股票資產 */}
         <div className="rounded-3xl bg-[#0B0B0F] border border-white/5 p-6 flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2"><span className="text-[#8B5CF6]">📈</span> Stocks & ETFs</h2>

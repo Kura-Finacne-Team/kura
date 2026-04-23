@@ -11,15 +11,15 @@ export interface ExchangeAccount {
 }
 
 interface ExchangeStoreState {
-  // Exchange 專用数据
+  // Exchange 專用資料
   exchangeAccounts: ExchangeAccount[];
   exchangeInvestmentAccounts: InvestmentAccount[]; // InvestmentAccount 形式
   exchangeInvestments: Investment[]; // Investment 形式
-  isLoading: Record<string, boolean>; // 按 exchangeAccountId 追蹤加載狀態
+  isLoading: Record<string, boolean>; // 依 exchangeAccountId 追蹤載入狀態
   error: string | null;
-  lastSyncedTime: Record<string, number | null>; // 按 exchangeAccountId 追蹤同步時間
+  lastSyncedTime: Record<string, number | null>; // 依 exchangeAccountId 追蹤同步時間
 
-  // Actions
+  // 操作
   addExchangeAccount: (account: ExchangeAccount) => void;
   removeExchangeAccount: (exchangeAccountId: string) => void;
   setExchangeData: (
@@ -31,14 +31,14 @@ interface ExchangeStoreState {
   setError: (error: string | null) => void;
   clearAll: () => void;
 
-  // Selectors
+  // 選擇器
   getTotalExchangeValue: () => number;
   getExchangeAccountIds: () => string[];
   getExchangesByType: (exchange: string) => InvestmentAccount[];
 }
 
 export const useExchangeStore = create<ExchangeStoreState>((set, get) => ({
-  // Initial State
+  // 初始狀態
   exchangeAccounts: [],
   exchangeInvestmentAccounts: [],
   exchangeInvestments: [],
@@ -46,9 +46,9 @@ export const useExchangeStore = create<ExchangeStoreState>((set, get) => ({
   error: null,
   lastSyncedTime: {},
 
-  // Actions
+  // 操作
   addExchangeAccount: (account: ExchangeAccount) => {
-    console.debug('[ExchangeStore] ➕ Added exchange account:', {
+    console.debug('[ExchangeStore] Added exchange account:', {
       exchange: account.exchange,
       accountId: account.id,
       accountName: account.accountName,
@@ -60,7 +60,7 @@ export const useExchangeStore = create<ExchangeStoreState>((set, get) => ({
   },
 
   removeExchangeAccount: (exchangeAccountId: string) => {
-    console.warn('[ExchangeStore] ➖ Removing exchange account:', { exchangeAccountId });
+    console.warn('[ExchangeStore] Removing exchange account:', { exchangeAccountId });
 
     set((state) => ({
       exchangeAccounts: state.exchangeAccounts.filter(
@@ -78,7 +78,7 @@ export const useExchangeStore = create<ExchangeStoreState>((set, get) => ({
       },
     }));
 
-    console.info('[ExchangeStore] ✅ Exchange account removed');
+    console.info('[ExchangeStore] Exchange account removed');
   },
 
   setExchangeData: (
@@ -86,7 +86,7 @@ export const useExchangeStore = create<ExchangeStoreState>((set, get) => ({
     investmentAccount: InvestmentAccount,
     investments: Investment[]
   ) => {
-    console.debug('[ExchangeStore] 📊 Setting exchange data:', {
+    console.debug('[ExchangeStore] Setting exchange data:', {
       accountId: exchangeAccountId,
       investmentCount: investments.length,
     });
@@ -110,7 +110,7 @@ export const useExchangeStore = create<ExchangeStoreState>((set, get) => ({
       },
     }));
 
-    console.info('[ExchangeStore] ✅ Exchange data updated');
+    console.info('[ExchangeStore] Exchange data updated');
   },
 
   setLoading: (exchangeAccountId: string, loading: boolean) => {
@@ -127,7 +127,7 @@ export const useExchangeStore = create<ExchangeStoreState>((set, get) => ({
   },
 
   clearAll: () => {
-    console.warn('[ExchangeStore] 🗑️ Clearing all exchange data');
+    console.warn('[ExchangeStore] Clearing all exchange data');
     set({
       exchangeAccounts: [],
       exchangeInvestmentAccounts: [],
@@ -138,7 +138,7 @@ export const useExchangeStore = create<ExchangeStoreState>((set, get) => ({
     });
   },
 
-  // Selectors
+  // 選擇器
   getTotalExchangeValue: () => {
     const { exchangeInvestments } = get();
     return exchangeInvestments.reduce(

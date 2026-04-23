@@ -1,6 +1,6 @@
 /**
- * Centralized Error Handler
- * 统一处理 API 错误和网络错误
+ * 集中式錯誤處理器
+ * 統一處理 API 錯誤與網路錯誤
  */
 
 export interface ApiErrorLog {
@@ -26,23 +26,23 @@ export class ApiError extends Error {
 
   private generateUserMessage(message: string, status: number, isNetworkError: boolean): string {
     if (isNetworkError) {
-      return '無法連接到服務器。請檢查您的網络連接或稍後重試。';
+      return 'Unable to connect to the server. Please check your network connection and try again later.';
     }
 
     switch (status) {
       case 400:
-        return '請求參數錯誤。請檢查輸入的信息。';
+        return 'Invalid request parameters. Please review your input.';
       case 401:
-        return 'unauthorized - 請先登錄。';
+        return 'Unauthorized. Please sign in first.';
       case 403:
-        return 'Forbidden - 您沒有執行此操作的權限。';
+        return 'Forbidden. You do not have permission to perform this action.';
       case 404:
-        return '找不到請求的資源。';
+        return 'The requested resource was not found.';
       case 500:
-        return '服務器出錯。請稍後重試。';
+        return 'Server error. Please try again later.';
       case 502:
       case 503:
-        return '服務暫時不可用。請稍後重試。';
+        return 'Service is temporarily unavailable. Please try again later.';
       default:
         return message;
     }
@@ -50,7 +50,7 @@ export class ApiError extends Error {
 }
 
 /**
- * 处理 fetch 错误并返回标准化的错误信息
+ * 處理 fetch 錯誤並回傳標準化錯誤資訊
  */
 export function handleFetchError(
   error: unknown,
@@ -65,7 +65,7 @@ export function handleFetchError(
     errorMessage = error.message;
     errorStack = error.stack;
 
-    // 检测网络错误
+    // 偵測網路錯誤
     if (
       errorMessage.includes('Failed to fetch') ||
       errorMessage.includes('Load failed') ||
@@ -99,14 +99,14 @@ export function handleFetchError(
 
   log.userMessage = apiError.userMessage;
 
-  // 输出日志
+  // 輸出日誌
   console.error(`[${apiName}] Request failed:`, log);
 
   return { error: apiError, log };
 }
 
 /**
- * 处理 HTTP 响应错误
+ * 處理 HTTP 回應錯誤
  */
 export function handleResponseError(
   status: number,
@@ -130,7 +130,7 @@ export function handleResponseError(
 }
 
 /**
- * 安全地提取错误消息
+ * 安全地提取錯誤訊息
  */
 export function extractErrorMessage(
   errorResponse: unknown
@@ -146,19 +146,19 @@ export function extractErrorMessage(
 }
 
 /**
- * 获取用户友好的错误消息
+ * 取得使用者友善錯誤訊息
  */
 export function getUserFriendlyMessage(error: ApiError | Error | string): string {
   if (error instanceof ApiError) {
     return error.userMessage;
   }
   if (error instanceof Error) {
-    // 检查常见错误
+    // 檢查常見錯誤
     if (error.message.includes('Network')) {
-      return '網絡連接出錯，請檢查您的網絡。';
+      return 'Network connection error. Please check your connection.';
     }
     if (error.message.includes('JSON')) {
-      return '服務器響應格式錯誤。';
+      return 'Invalid server response format.';
     }
     return error.message;
   }
@@ -166,7 +166,7 @@ export function getUserFriendlyMessage(error: ApiError | Error | string): string
 }
 
 /**
- * 记录成功的请求
+ * 記錄成功請求
  */
 export function logSuccess(
   response: unknown,
@@ -180,7 +180,7 @@ export function logSuccess(
 }
 
 /**
- * 记录响应信息
+ * 記錄回應資訊
  */
 export function logResponse(
   status: number,

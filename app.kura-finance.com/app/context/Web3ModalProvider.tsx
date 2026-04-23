@@ -1,4 +1,4 @@
-// src/context/Web3ModalProvider.tsx
+// Web3 Modal Provider
 'use client'
 
 import React, { ReactNode, useMemo } from 'react'
@@ -11,15 +11,15 @@ import AppSessionHydrator from '@/components/AppSessionHydrator'
 // 1. 設定 React Query
 const queryClient = new QueryClient()
 
-// Reown (formerly WalletConnect) Project ID
+// Reown（原 WalletConnect）專案 ID
 const reownProjectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
 
-// Get the actual URL from the browser at runtime (client-side only)
+// 在執行期從瀏覽器取得實際 URL（僅客戶端）
 const getWalletMetadataUrl = () => {
   if (typeof window !== 'undefined') {
     return `${window.location.protocol}//${window.location.host}`;
   }
-  // Must use environment variable if window is not available
+  // 若 window 不可用，必須使用環境變數
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   if (!appUrl) {
     throw new Error('NEXT_PUBLIC_APP_URL environment variable is not set.');

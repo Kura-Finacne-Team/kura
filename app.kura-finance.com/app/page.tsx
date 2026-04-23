@@ -25,7 +25,7 @@ export default function RootHubPage() {
   const requestRegistrationCode = useAppStore((state) => state.requestRegistrationCode);
   const verifyRegistration = useAppStore((state) => state.verifyRegistration);
 
-  // Redirect to dashboard if authenticated
+  // 已登入時導向 dashboard
   useEffect(() => {
     if (authStatus === 'authenticated') {
       router.push('/dashboard');
@@ -122,7 +122,7 @@ export default function RootHubPage() {
     }
   };
 
-  // Show loading state
+  // 顯示載入狀態
   if (authStatus === 'loading') {
     return (
       <div className="flex-1 flex justify-center items-center p-10">
@@ -136,7 +136,7 @@ export default function RootHubPage() {
     );
   }
 
-  // Show login page if unauthenticated
+  // 未登入時顯示登入頁
   if (authStatus === 'unauthenticated') {
     return (
       <div className="flex-1 flex justify-center items-center p-10">
@@ -148,14 +148,14 @@ export default function RootHubPage() {
             </p>
             
             <form onSubmit={handleAuthSubmit} className="w-full space-y-4">
-              {/* Success Message */}
+              {/* 成功訊息 */}
               {successMessage && (
                 <div className="rounded-xl bg-green-500/10 border border-green-500/30 px-4 py-3 text-xs text-green-400">
                   {successMessage}
                 </div>
               )}
 
-              {/* Mode Switcher */}
+              {/* 模式切換 */}
               {authMode !== 'forgot_password' && (
                 <div className="flex items-center gap-2 text-xs bg-[#1A1A24] p-1 rounded-xl mb-6">
                   <button
@@ -195,7 +195,7 @@ export default function RootHubPage() {
                 </div>
               )}
 
-              {/* Forgot Password Header */}
+              {/* 忘記密碼標題 */}
               {authMode === 'forgot_password' && (
                 <div className="text-left mb-6">
                   <h2 className="text-lg font-semibold text-white mb-1">Reset Password</h2>
@@ -207,7 +207,7 @@ export default function RootHubPage() {
                 </div>
               )}
 
-              {/* Email Input */}
+              {/* 電子郵件輸入 */}
               <input
                 type="email"
                 name="email"
@@ -219,7 +219,7 @@ export default function RootHubPage() {
                 className="w-full rounded-xl bg-[#0B0B0F] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#8B5CF6]/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               />
 
-              {/* Verify Step Inputs */}
+              {/* 驗證步驟輸入欄位 */}
               {authMode === 'forgot_password' && resetStep === 'verify' && (
                 <>
                   <input
@@ -239,7 +239,7 @@ export default function RootHubPage() {
                 </>
               )}
 
-              {/* Password Input (Login/Register) */}
+              {/* 密碼輸入（登入 / 註冊） */}
               {authMode !== 'forgot_password' && (
                 <input
                   type="password"
@@ -252,7 +252,7 @@ export default function RootHubPage() {
                 />
               )}
 
-              {/* Register Verify Step Input */}
+              {/* 註冊驗證步驟輸入 */}
               {authMode === 'register' && registrationStep === 'verify' && (
                 <input
                   type="text"
@@ -263,7 +263,7 @@ export default function RootHubPage() {
                 />
               )}
 
-              {/* Forgot Password Link */}
+              {/* 忘記密碼連結 */}
               {authMode === 'login' && (
                 <div className="flex justify-end">
                   <button
@@ -281,14 +281,14 @@ export default function RootHubPage() {
                 </div>
               )}
 
-              {/* Error Message */}
+              {/* 錯誤訊息 */}
               {authError && (
                 <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-xs text-red-400">
                   {authError}
                 </div>
               )}
 
-              {/* Submit Button */}
+              {/* 送出按鈕 */}
               <button
                 type="submit"
                 disabled={isAuthenticating}
@@ -307,7 +307,7 @@ export default function RootHubPage() {
                   : 'Sign In'}
               </button>
 
-              {/* Back to Login Link */}
+              {/* 返回登入連結 */}
               {authMode === 'forgot_password' && (
                 <div className="mt-4 text-center">
                   <button

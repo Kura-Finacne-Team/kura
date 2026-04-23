@@ -1,12 +1,12 @@
 /**
- * Client-side Key Derivation
+ * 前端金鑰推導
  *
  * 使用 Web Crypto API (瀏覽器原生，無需外部套件) 實現：
  * - PBKDF2 推導 Master Key（模擬 Argon2id 的安全性）
  * - HKDF 衍生 KEK（Key Encryption Key）和 Auth Key
  * - AES-GCM 加密/解密 Data Key
  *
- * NOTE: 生產等級可換成 Argon2id (hash-wasm + WASM)，
+ * 備註：生產等級可換成 Argon2id (hash-wasm + WASM)，
  * 但 PBKDF2 with 600,000 iterations 已符合 NIST 建議。
  *
  * 金鑰層次：
@@ -51,7 +51,7 @@ function base64ToBytes(b64: string): Uint8Array {
 // ─────────────────────────────────────────
 
 /**
- * Step 1: password + salt → MasterKey (CryptoKey，不可匯出)
+ * 步驟 1：password + salt → MasterKey（CryptoKey，不可匯出）
  * 使用 PBKDF2 with 600k iterations
  */
 async function deriveMasterKey(password: string, saltHex: string): Promise<CryptoKey> {
@@ -79,7 +79,7 @@ async function deriveMasterKey(password: string, saltHex: string): Promise<Crypt
 }
 
 /**
- * Step 2: MasterKey → 子金鑰（HKDF）
+ * 步驟 2：MasterKey → 子金鑰（HKDF）
  * @param purpose 'kek' 或 'auth'
  */
 async function deriveSubKey(
@@ -107,8 +107,8 @@ async function deriveSubKey(
 // ─────────────────────────────────────────
 
 /**
- * 用 KEK 加密 Data Key（hex string）
- * 返回格式：base64(iv + ciphertext)
+ * 使用 KEK 加密 Data Key（hex 字串）
+ * 回傳格式：base64(iv + ciphertext)
  */
 async function encryptDataKey(plainDataKeyHex: string, kek: CryptoKey): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -127,9 +127,9 @@ async function encryptDataKey(plainDataKeyHex: string, kek: CryptoKey): Promise<
 }
 
 /**
- * 用 KEK 解密 Data Key
+ * 使用 KEK 解密 Data Key
  * 輸入格式：base64(iv + ciphertext)
- * 返回：Data Key hex string
+ * 回傳：Data Key hex 字串
  */
 async function decryptDataKey(encryptedDataKey: string, kek: CryptoKey): Promise<string> {
   const combined = base64ToBytes(encryptedDataKey);
@@ -164,7 +164,7 @@ export async function deriveKeysFromPassword(
   const masterKey = await deriveMasterKey(password, srpSalt);
   const kek = await deriveSubKey(masterKey, 'kek', kekSalt);
 
-  // Auth key as raw bytes for SRP
+  // 以原始位元組推導 SRP 使用的 Auth key
   const authKeyBits = await crypto.subtle.deriveBits(
     {
       name: 'HKDF',

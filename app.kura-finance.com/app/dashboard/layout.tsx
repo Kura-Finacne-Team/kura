@@ -14,14 +14,14 @@ export default function DashboardLayout({
   const authStatus = useAppStore((state) => state.authStatus);
   const router = useRouter();
 
-  // Redirect to home if not authenticated
+  // 若未認證則導回首頁
   React.useEffect(() => {
     if (authStatus === 'unauthenticated') {
       router.push('/');
     }
   }, [authStatus, router]);
 
-  // Show loading state while checking auth
+  // 檢查認證期間顯示載入狀態
   if (authStatus === 'loading') {
     return (
       <div className="flex items-center justify-center h-screen w-full">
@@ -35,22 +35,22 @@ export default function DashboardLayout({
     );
   }
 
-  // Only render dashboard if authenticated
+  // 僅在已認證時渲染 dashboard
   if (authStatus !== 'authenticated') {
     return null;
   }
 
   return (
     <div className="flex flex-col h-full w-full">
-      {/* TopNav - Fixed at top */}
+      {/* 頂部導覽列 - 固定於頂部 */}
       <TopNav />
       
-      {/* Main content area with Sidebar */}
+      {/* 含側邊欄的主要內容區域 */}
       <div className="flex flex-1 overflow-hidden w-full">
-        {/* Sidebar - Fixed, non-scrollable */}
+        {/* 側邊欄 - 固定且不可捲動 */}
         <Sidebar />
         
-        {/* Main content - Scrollable */}
+        {/* 主內容 - 可捲動 */}
         <main className="relative z-30 flex-1 overflow-y-auto bg-gradient-to-br from-[#0B0B0F] to-[#1A1A24]/30 w-full">
           {children}
         </main>

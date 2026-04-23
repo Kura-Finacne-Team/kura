@@ -1,4 +1,4 @@
-// src/store/useFinanceStore.ts
+// finance store
 import { create } from 'zustand';
 import { fetchPlaidFinanceSnapshot } from '@/lib/plaidApi';
 import { fetchAssetHistory, AssetHistoryPoint, AssetHistorySummary } from '@/lib/assetApi';
@@ -9,7 +9,7 @@ export interface Account {
   balance: number;
   type: 'checking' | 'saving' | 'credit' | 'crypto';
   logo: string;
-  mask?: string; // 帳號末 4 碼（部分機構不提供）
+  mask?: string; // 帳號末 4 碼（部分機構可能不提供）
 }
 
 export interface Transaction {
@@ -24,7 +24,7 @@ export interface Transaction {
   type: 'credit' | 'deposit' | 'transfer';
 }
 
-// 💡 1. 新增：投資帳戶 (券商 / Web3 錢包)
+// 1. 投資帳戶（券商 / Web3 錢包）
 export interface InvestmentAccount {
   id: string;
   name: string;
@@ -32,7 +32,7 @@ export interface InvestmentAccount {
   logo: string;
 }
 
-// 💡 2. 修改：為每筆持倉加上 accountId
+// 2. 每筆持倉都包含 accountId
 export interface Investment {
   id: string;
   accountId: string;      // 綁定到 InvestmentAccount 的 ID
@@ -55,7 +55,7 @@ interface SyncWalletPayload {
 
 
 interface FinanceState {
-  // Data
+  // 資料
   accounts: Account[];
   transactions: Transaction[];
   investmentAccounts: InvestmentAccount[];
@@ -64,16 +64,16 @@ interface FinanceState {
   selectedTimeRange: '1M' | '3M' | '6M' | '1Y' | 'All';
   chartDataByTimeRange: Record<string, number[]>;
   
-  // Asset History from API (server-side, used for the dashboard chart)
+  // API 資產歷史（由伺服器提供，供儀表板圖表使用）
   apiAssetHistory: AssetHistoryPoint[];
   assetHistorySummary: AssetHistorySummary | null;
   isLoadingAssetHistory: boolean;
 
-  // Loading & Error States
+  // 載入與錯誤狀態
   isLoadingPlaidData: boolean;
   plaidError: string | null;
   
-  // UI Actions
+  // UI 操作
   toggleAiOptIn: () => void;
   setAccounts: (accounts: Account[]) => void;
   setTransactions: (transactions: Transaction[]) => void;
@@ -81,18 +81,18 @@ interface FinanceState {
   setInvestments: (investments: Investment[]) => void;
   setSelectedTimeRange: (timeRange: '1M' | '3M' | '6M' | '1Y' | 'All') => void;
   
-  // Plaid Operations
+  // Plaid 操作
   hydratePlaidFinanceData: () => Promise<void>;
   clearPlaidFinanceData: () => void;
   disconnectBankingAccount: (accountId: string) => Promise<void>;
   disconnectInvestmentAccount: (accountId: string) => void;
   updateAccountOrder: (accountIds: string[], investmentAccountIds: string[]) => Promise<void>;
   
-  // Web3 Wallet Operations
+  // Web3 Wallet 操作
   syncConnectedWalletPosition: (payload: SyncWalletPayload) => Promise<void>;
   removeConnectedWalletPosition: (address: string, chainId: number) => void;
   
-  // Asset History from API
+  // API 資產歷史
   hydrateAssetHistory: (days?: number) => Promise<void>;
 }
 
@@ -115,7 +115,7 @@ const CHAIN_MARKET_META: Record<number, { coingeckoId: string; logo: string; fal
 };
 
 export const useFinanceStore = create<FinanceState>((set) => ({
-  // Initial State
+  // 初始狀態
   accounts: [],
   transactions: [],
   investmentAccounts: [],
@@ -135,7 +135,7 @@ export const useFinanceStore = create<FinanceState>((set) => ({
   assetHistorySummary: null,
   isLoadingAssetHistory: false,
   
-  // Simple Setters
+  // 基本 setter
   toggleAiOptIn: () => set((state) => ({ isAiOptedIn: !state.isAiOptedIn })),
   setAccounts: (accounts) => set({ accounts }),
   setTransactions: (transactions) => set({ transactions }),
@@ -143,7 +143,7 @@ export const useFinanceStore = create<FinanceState>((set) => ({
   setInvestments: (investments) => set({ investments }),
   setSelectedTimeRange: (timeRange) => set({ selectedTimeRange: timeRange }),
   
-  // Plaid Data Hydration
+  // Plaid 資料同步
   hydratePlaidFinanceData: async () => {
     try {
       set({ isLoadingPlaidData: true, plaidError: null });
@@ -157,8 +157,8 @@ export const useFinanceStore = create<FinanceState>((set) => ({
       });
 
       set((state) => {
-        // Preserve Web3 Wallet and Exchange accounts (not managed by Plaid)
-        // Web3 Wallet Store 和 Exchange Store 現在獨立管理，但舊的混合數據需要保留
+        // 保留 Web3 Wallet 與 Exchange 帳戶（非 Plaid 管理）
+        // Web3 Wallet Store 與 Exchange Store 現在獨立管理，但舊的混合資料需要保留
         const nonPlaidAccounts = state.investmentAccounts.filter(
           (account) => account.type === 'Web3 Wallet' || account.type === 'Exchange'
         );
@@ -191,7 +191,7 @@ export const useFinanceStore = create<FinanceState>((set) => ({
     console.info('[FinanceStore] Clearing Plaid finance data');
     
     set((state) => {
-      // Only clear Plaid data, preserve Web3 Wallet and Exchange accounts
+      // 僅清除 Plaid 資料，保留 Web3 Wallet 與 Exchange 帳戶
       const nonPlaidAccounts = state.investmentAccounts.filter(
         (account) => account.type === 'Web3 Wallet' || account.type === 'Exchange'
       );
@@ -214,12 +214,12 @@ export const useFinanceStore = create<FinanceState>((set) => ({
     });
   },
   
-  // Account Disconnect (with backend sync)
+  // 帳戶斷線（含後端同步）
   disconnectBankingAccount: async (accountId: string) => {
     try {
       console.debug('[FinanceStore] Disconnecting banking account', { accountId });
       
-      // Update UI immediately (optimistic update)
+      // 先即時更新 UI（樂觀更新）
       set((state) => ({
         accounts: state.accounts.filter((account) => account.id !== accountId),
         transactions: state.transactions.filter((transaction) => transaction.accountId !== accountId),
@@ -242,13 +242,13 @@ export const useFinanceStore = create<FinanceState>((set) => ({
     console.info('[FinanceStore] Investment account disconnected');
   },
   
-  // Update Account Order
+  // 更新帳戶排序
   updateAccountOrder: async (accountIds: string[], investmentAccountIds: string[]) => {
     try {
       console.debug('[FinanceStore] Updating account order', { accountIds, investmentAccountIds });
       
-      // Note: Backend sync should be called from parent component or useAppStore
-      // This just updates the UI state based on new order
+      // 備註：後端同步應由父元件或 useAppStore 呼叫
+      // 此處僅依新排序更新 UI 狀態
       set((state) => {
         const orderedAccounts = accountIds
           .map(id => state.accounts.find(a => a.id === id))
@@ -272,7 +272,7 @@ export const useFinanceStore = create<FinanceState>((set) => ({
     }
   },
   
-  // Web3 Wallet Operations
+  // Web3 Wallet 操作
   syncConnectedWalletPosition: async ({
     address,
     chainId,
@@ -355,7 +355,7 @@ export const useFinanceStore = create<FinanceState>((set) => ({
     console.info('[FinanceStore] Wallet position removed');
   },
   
-  // Asset History from API
+  // API 資產歷史
   hydrateAssetHistory: async (days: number = 30) => {
     try {
       set({ isLoadingAssetHistory: true });

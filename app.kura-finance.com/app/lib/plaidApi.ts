@@ -1,11 +1,11 @@
 /**
- * Plaid API Service Layer
- * Backend handles caching, frontend focuses on error handling and type safety
+ * Plaid API 服務層
+ * 後端負責快取，前端專注於錯誤處理與型別安全
  */
 
 import { requestJson } from './httpClient';
 
-// ============= Types =============
+// ============= 型別定義 =============
 
 export interface PlaidAccountPayload {
   id: string;
@@ -57,6 +57,11 @@ export interface PlaidFinanceSnapshot {
   investments: PlaidInvestmentPayload[];
 }
 
+export interface PlaidLinkTokenResponse {
+  link_token?: string;
+  token?: string;
+}
+
 export class PlaidApiError extends Error {
   status: number;
   errorCode?: string;
@@ -69,7 +74,7 @@ export class PlaidApiError extends Error {
   }
 }
 
-// ============= Request Handler =============
+// ============= 請求處理器 =============
 
 async function plaidRequest<T>(
   path: string,
@@ -78,22 +83,22 @@ async function plaidRequest<T>(
   return requestJson<T>(path, options, 'PlaidAPI');
 }
 
-// ============= Public API =============
+// ============= 公開 API =============
 
 /**
- * Create Link Token for Plaid Link UI
- * 获取 Link Token 以打开 Plaid Link UI
+ * 建立 Plaid Link 使用的 Link Token
+ * 取得 Link Token 以開啟 Plaid Link UI
  */
-export const createPlaidLinkToken = (): Promise<{ link_token: string }> => {
-  return plaidRequest<{ link_token: string }>(
+export const createPlaidLinkToken = (): Promise<PlaidLinkTokenResponse> => {
+  return plaidRequest<PlaidLinkTokenResponse>(
     '/api/plaid/create-link-token',
     { method: 'POST' }
   );
 };
 
 /**
- * Exchange public token for access token
- * 用户完成银行认证后，交换获得 Access Token
+ * 將 public token 交換為 access token
+ * 使用者完成銀行驗證後，交換取得 Access Token
  */
 export const exchangePlaidPublicToken = (
   payload: { public_token: string; institution_name?: string }
@@ -108,8 +113,8 @@ export const exchangePlaidPublicToken = (
 };
 
 /**
- * Get finance snapshot
- * 获取财务快照（帐户、交易、投资）
+ * 取得財務快照
+ * 取得財務快照（帳戶、交易、投資）
  */
 export const fetchPlaidFinanceSnapshot = (): Promise<PlaidFinanceSnapshot> => {
   return plaidRequest<PlaidFinanceSnapshot>(
@@ -119,8 +124,8 @@ export const fetchPlaidFinanceSnapshot = (): Promise<PlaidFinanceSnapshot> => {
 };
 
 /**
- * Disconnect a Plaid account
- * 断开连接某个 Plaid 账户
+ * 中斷 Plaid 帳戶連線
+ * 中斷指定 Plaid 帳戶連線
  */
 export const disconnectPlaidAccount = (
   accountId: string

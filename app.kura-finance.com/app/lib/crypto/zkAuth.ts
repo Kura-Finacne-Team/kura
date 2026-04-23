@@ -1,5 +1,5 @@
 /**
- * Zero-Knowledge Auth Flow
+ * 零知識認證流程
  *
  * 整合 keyDerivation + srpClient，提供完整的 ZK 登入/註冊流程。
  * 外部只需呼叫：
@@ -7,7 +7,7 @@
  *   - zkVerifyRegistration(...)   → 驗證碼註冊 + SRP 初始化
  *   - clearCryptoSession()        → 登出時清除 Data Key
  *
- * Data Key 解密後存放於 module-level memory，
+ * Data Key 解密後存放於模組層級記憶體，
  * 頁面重整或登出後即消失（類似 Proton 的 session key）。
  */
 
@@ -57,7 +57,7 @@ export function clearCryptoSession(): void {
 export async function zkLogin(email: string, password: string): Promise<{ user: BackendUserProfile }> {
   const normalizedEmail = email.toLowerCase().trim();
 
-  // Step 1: 取得 salt — 同時確認此帳號是否已啟用 SRP
+  // 步驟 1：取得 salt，並確認此帳號已啟用 SRP
   const salts = await getSRPSalts(normalizedEmail);
   if (!salts.srpEnabled) {
     throw new Error('Your account requires a security upgrade. Please reset your password to continue.');
@@ -65,16 +65,16 @@ export async function zkLogin(email: string, password: string): Promise<{ user: 
 
   const { srpSalt, kekSalt } = salts;
 
-  // Step 2: 推導金鑰（純 client，password 不離開此函式）
+  // 步驟 2：推導金鑰（純前端，password 不離開此函式）
   const { kek, authKeyHex } = await deriveKeysFromPassword(password, srpSalt, kekSalt);
 
-  // Step 3: SRP 完整握手
+  // 步驟 3：執行完整 SRP 握手
   const { user, encryptedDataKey } = await srpFullLogin(
     normalizedEmail,
     authKeyHex,
   );
 
-  // Step 4: 解密 Data Key，存入 session
+  // 步驟 4：解密 Data Key 並存入 session
   if (encryptedDataKey) {
     const dataKeyHex = await unsealDataKey(encryptedDataKey, kek);
     cryptoSession = { dataKeyHex, kek };
@@ -123,18 +123,18 @@ export async function zkResetPassword(email: string, code: string, newPassword: 
   const srpSalt = generateSalt();
   const kekSalt = generateSalt();
 
-  // 1. 推導新金鑰
+  // 步驟 1：推導新金鑰
   const { kek, authKeyHex } = await deriveKeysFromPassword(newPassword, srpSalt, kekSalt);
   const { srpVerifier } = await computeVerifier(normalizedEmail, authKeyHex, srpSalt);
 
-  // 2. 生成全新 Data Key 並加密（完全在 client 端生成，無需認證、後端永遠看不到明文）
+  // 步驟 2：生成全新 Data Key 並加密（完全在前端生成，後端無法看到明文）
   const plainDataKey = generateSalt();
   const encryptedDataKey = await sealDataKey(plainDataKey, kek);
 
-  // 3. 上傳給後端
+  // 步驟 3：上傳至後端
   await apiResetPassword(normalizedEmail, code, srpSalt, srpVerifier, encryptedDataKey, kekSalt);
 
-  // 4. 重設密碼後，需要讓用戶重新手動登入以建立 session
+  // 步驟 4：重設密碼後，需重新登入以建立 session
   clearCryptoSession();
 }
 
@@ -153,17 +153,17 @@ export async function zkChangePassword(email: string, newPassword: string): Prom
   const srpSalt = generateSalt();
   const kekSalt = generateSalt();
 
-  // 1. 推導新金鑰
+  // 步驟 1：推導新金鑰
   const { kek, authKeyHex } = await deriveKeysFromPassword(newPassword, srpSalt, kekSalt);
   const { srpVerifier } = await computeVerifier(normalizedEmail, authKeyHex, srpSalt);
 
-  // 2. 用新的 KEK 重新加密現有的明文 Data Key
+  // 步驟 2：使用新 KEK 重新加密現有明文 Data Key
   const encryptedDataKey = await sealDataKey(cryptoSession.dataKeyHex, kek);
 
-  // 3. 上傳給後端
+  // 步驟 3：上傳至後端
   await apiChangePassword(srpSalt, srpVerifier, encryptedDataKey, kekSalt);
 
-  // 4. 更新記憶體中的 session KEK
+  // 步驟 4：更新記憶體中的 session KEK
   cryptoSession.kek = kek;
 }
 

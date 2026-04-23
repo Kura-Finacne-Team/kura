@@ -1,10 +1,10 @@
 /**
- * SRP Client (Secure Remote Password)
+ * SRP 客戶端（Secure Remote Password）
  *
  * 正確的 tssrp6a client API：
- *   step1(userId, password) → SRPClientSessionStep1  (有 IH，無 A)
- *   step1.step2(salt, B)    → SRPClientSessionStep2  (有 A, M1)
- *   step2.step3(M2)         → void（驗證 server proof）
+ *   step1(userId, password) → SRPClientSessionStep1  （有 IH，無 A）
+ *   step1.step2(salt, B)    → SRPClientSessionStep2  （有 A, M1）
+ *   step2.step3(M2)         → void（驗證伺服器 proof）
  *
  * 登入流程（後端先 commit B，client 再送 A+M1 一起驗證）：
  *   1. POST /srp/challenge { email }          → { sessionId, srpSalt, serverB, ... }
@@ -13,7 +13,7 @@
  *   4. POST /srp/verify { sessionId, A, M1 } → { serverM2, token }
  *   5. step2.step3(serverM2)                  → void
  *
- * 安裝：npm install tssrp6a
+ * 安裝指令：npm install tssrp6a
  */
 
 import {
@@ -99,16 +99,16 @@ export interface SRPLoginResult {
  * 3. /srp/verify（傳 sessionId, clientA, clientM1）→ 後端驗證 + 返回 M2
  * 4. step2.step3(M2) 驗證後端 proof
  *
- * 關鍵修正：只呼叫一次 step1，用真實 B 直接計算，A 和 M1 來自同一次 step2。
+ * 關鍵修正：只呼叫一次 step1，用真實 B 直接計算，A 與 M1 來自同一次 step2。
  */
 export async function srpFullLogin(
   email: string,
   authKeyHex: string,
 ): Promise<SRPLoginResult> {
-  // Step 1: 取得後端的 challenge（不需要先傳 clientA）
+  // 步驟 1：取得後端 challenge（不需先傳 clientA）
   const challenge = await srpPost<SRPChallengeResponse>('/api/auth/srp/challenge', { email });
 
-  // Step 2: 用真實 B 一次計算出正確的 A 和 M1
+  // 步驟 2：使用真實 B 一次計算出正確 A 與 M1
   const clientSession = new SRPClientSession(SRP_ROUTINES);
   const step1 = await clientSession.step1(email, authKeyHex);
   const step2 = await step1.step2(
@@ -116,7 +116,7 @@ export async function srpFullLogin(
     BigInt(`0x${challenge.serverB}`),
   );
 
-  // Step 3: 同時傳 clientA + M1（後端在此才需要 A）
+  // 步驟 3：同時傳送 clientA 與 M1（後端在此才需要 A）
   const result = await srpPost<{ serverM2: string; token: string; user: BackendUserProfile }>(
     '/api/auth/srp/verify',
     {
@@ -126,7 +126,7 @@ export async function srpFullLogin(
     },
   );
 
-  // Step 4: 驗證後端 M2（防止 server 偽造）
+  // 步驟 4：驗證後端 M2（防止伺服器偽造）
   await step2.step3(BigInt(`0x${result.serverM2}`));
 
   return {

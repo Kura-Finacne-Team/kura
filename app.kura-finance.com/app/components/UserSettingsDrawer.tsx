@@ -1,4 +1,4 @@
-// src/components/UserSettingsDrawer.tsx
+// 使用者設定抽屜元件
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -90,12 +90,12 @@ export default function UserSettingsDrawer({ isOpen, onClose, anchorRef }: UserS
                 )}
               </div>
 
-              {/* Display Name */}
+              {/* 顯示名稱 */}
               <h3 className="text-base font-semibold text-white">
                 {userProfile.displayName || 'User'}
               </h3>
 
-              {/* Email */}
+              {/* 電子郵件 */}
               <p className="text-sm text-gray-400">
                 {userProfile.email}
               </p>
@@ -106,7 +106,7 @@ export default function UserSettingsDrawer({ isOpen, onClose, anchorRef }: UserS
 
             {/* 菜單項 */}
             <div className="px-6 py-4 flex flex-col gap-2">
-              {/* Profile */}
+              {/* 個人資料 */}
               <button
                 onClick={() => handleMenuClick(() => router.push('/dashboard/profile'))}
                 className="w-full text-left px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition-colors text-sm"
@@ -114,7 +114,7 @@ export default function UserSettingsDrawer({ isOpen, onClose, anchorRef }: UserS
                 Profile
               </button>
 
-              {/* Notifications */}
+              {/* 通知 */}
               <button
                 onClick={() => handleMenuClick(() => router.push('/dashboard'))}
                 className="w-full text-left px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition-colors text-sm"
@@ -122,7 +122,7 @@ export default function UserSettingsDrawer({ isOpen, onClose, anchorRef }: UserS
                 Notifications
               </button>
 
-              {/* Security */}
+              {/* 安全性 */}
               <button
                 onClick={() => handleMenuClick(() => router.push('/dashboard/security'))}
                 className="w-full text-left px-3 py-2.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition-colors text-sm"
@@ -130,7 +130,7 @@ export default function UserSettingsDrawer({ isOpen, onClose, anchorRef }: UserS
                 Security
               </button>
 
-              {/* Privacy */}
+              {/* 隱私權 */}
               <a
                 href="https://kura-finance.com/privacy"
                 target="_blank"
@@ -145,7 +145,7 @@ export default function UserSettingsDrawer({ isOpen, onClose, anchorRef }: UserS
             {/* 分割線 */}
             <div className="h-px bg-gradient-to-r from-white/5 via-white/10 to-white/5" />
 
-            {/* Log Out */}
+            {/* 登出 */}
             <div className="px-6 py-4">
               <button
                 onClick={handleLogout}

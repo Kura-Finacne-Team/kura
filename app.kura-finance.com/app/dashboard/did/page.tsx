@@ -20,7 +20,7 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // TODO: Implement profile picture upload
+    // 待辦：實作頭像上傳
     console.log('Profile picture upload:', file);
   };
 
@@ -30,7 +30,7 @@ export default function ProfilePage() {
       setErrorMessage('');
       setSuccessMessage('');
 
-      // Update display name
+      // 更新顯示名稱
       if (displayName !== userProfile.displayName) {
         await setDisplayName(displayName);
       }
@@ -48,7 +48,7 @@ export default function ProfilePage() {
   return (
     <div className="w-full pb-10 px-8 pt-10">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
+        {/* 頁面標題 */}
         <div className="mb-8">
           <button
             onClick={() => router.back()}
@@ -60,7 +60,7 @@ export default function ProfilePage() {
           <p className="text-gray-400 mt-2">Manage your account information and preferences</p>
         </div>
 
-        {/* Messages */}
+        {/* 訊息區 */}
         {successMessage && (
           <div className="mb-6 p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm">
             {successMessage}
@@ -72,7 +72,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Profile Picture Section */}
+        {/* 頭像區塊 */}
         <div className="mb-8 p-6 rounded-xl border border-white/10 bg-[#0B0B0F]">
           <h2 className="text-lg font-semibold text-white mb-4">Profile Picture</h2>
           <div className="flex items-center gap-6">
@@ -100,7 +100,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Email Address Section */}
+        {/* 電子郵件區塊 */}
         <div className="mb-8 p-6 rounded-xl border border-white/10 bg-[#0B0B0F]">
           <h2 className="text-lg font-semibold text-white mb-4">Email Address</h2>
           <div>
@@ -114,7 +114,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Display Name Section */}
+        {/* 顯示名稱區塊 */}
         <div className="mb-8 p-6 rounded-xl border border-white/10 bg-[#0B0B0F]">
           <h2 className="text-lg font-semibold text-white mb-4">Display Name</h2>
           <input
@@ -127,11 +127,11 @@ export default function ProfilePage() {
           <p className="text-gray-400 text-sm mt-2">This is how your name appears across the platform</p>
         </div>
 
-        {/* Appearance Section */}
+        {/* 外觀區塊 */}
         <div className="mb-8 p-6 rounded-xl border border-white/10 bg-[#0B0B0F]">
           <h2 className="text-lg font-semibold text-white mb-4">Appearance</h2>
           <div className="space-y-3">
-            {/* Dark Mode */}
+            {/* 深色模式 */}
             <label className="flex items-center gap-4 p-4 rounded-lg hover:bg-white/5 cursor-pointer transition-colors">
               <input
                 type="radio"
@@ -147,7 +147,7 @@ export default function ProfilePage() {
               </div>
             </label>
 
-            {/* Light Mode */}
+            {/* 淺色模式 */}
             <label className="flex items-center gap-4 p-4 rounded-lg hover:bg-white/5 cursor-pointer transition-colors">
               <input
                 type="radio"
@@ -165,7 +165,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Save Button */}
+        {/* 儲存按鈕 */}
         <div className="flex gap-3">
           <button
             onClick={() => router.back()}
