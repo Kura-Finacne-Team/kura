@@ -41,12 +41,6 @@
             <li>
               <NuxtLink to="/" class="text-sm text-kura-text-secondary hover:text-kura-text transition-colors">Kura APP</NuxtLink>
             </li>
-            <li>
-              <NuxtLink to="/klhs" class="text-sm text-kura-text-secondary hover:text-kura-text transition-colors">KLHS</NuxtLink>
-            </li>
-            <li>
-              <NuxtLink to="/notary" class="text-sm text-kura-text-secondary hover:text-kura-text transition-colors">Kura Notary</NuxtLink>
-            </li>
           </ul>
         </div>
 
@@ -62,9 +56,6 @@
             </li>
             <li>
               <NuxtLink to="/startups-llcs" class="text-sm text-kura-text-secondary hover:text-kura-text transition-colors">Startups & LLCs</NuxtLink>
-            </li>
-            <li>
-              <NuxtLink to="/defi-protocols" class="text-sm text-kura-text-secondary hover:text-kura-text transition-colors">DeFi Protocols</NuxtLink>
             </li>
           </ul>
         </div>

@@ -73,19 +73,11 @@
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[180px]">
             
             <!-- Products Menu -->
-            <div v-show="activeDropdown === 'products'" class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div v-show="activeDropdown === 'products'" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
               <a href="/" class="group/item flex flex-col gap-2 p-4 rounded-xl hover:bg-kura-background-light transition-colors border border-transparent hover:border-kura-border" @click="activeDropdown = null">
                 <div class="text-base font-semibold text-kura-text group-hover/item:text-kura-primary transition-colors">Kura APP</div>
                 <div class="text-sm text-kura-text-secondary line-clamp-2">Unified wealth management platform with deep tools.</div>
               </a>
-              <NuxtLink to="/klhs" class="group/item flex flex-col gap-2 p-4 rounded-xl hover:bg-kura-background-light transition-colors border border-transparent hover:border-kura-border" @click="activeDropdown = null">
-                <div class="text-base font-semibold text-kura-text group-hover/item:text-kura-primary transition-colors">KLHS</div>
-                <div class="text-sm text-kura-text-secondary line-clamp-2">Kura Liquidity Health Score for creditworthiness.</div>
-              </NuxtLink>
-              <NuxtLink to="/notary" class="group/item flex flex-col gap-2 p-4 rounded-xl hover:bg-kura-background-light transition-colors border border-transparent hover:border-kura-border" @click="activeDropdown = null">
-                <div class="text-base font-semibold text-kura-text group-hover/item:text-kura-primary transition-colors">Kura Notary</div>
-                <div class="text-sm text-kura-text-secondary line-clamp-2">Decentralized blockchain notarization platform.</div>
-              </NuxtLink>
             </div>
 
             <!-- Solutions Menu -->
@@ -101,10 +93,6 @@
               <NuxtLink to="/startups-llcs" class="group/item flex flex-col gap-2 p-4 rounded-xl hover:bg-kura-background-light transition-colors border border-transparent hover:border-kura-border" @click="activeDropdown = null">
                 <div class="text-base font-semibold text-kura-text group-hover/item:text-kura-primary transition-colors">For Startups & LLCs</div>
                 <div class="text-sm text-kura-text-secondary line-clamp-2">Treasury management & compliance tools</div>
-              </NuxtLink>
-              <NuxtLink to="/defi-protocols" class="group/item flex flex-col gap-2 p-4 rounded-xl hover:bg-kura-background-light transition-colors border border-transparent hover:border-kura-border" @click="activeDropdown = null">
-                <div class="text-base font-semibold text-kura-text group-hover/item:text-kura-primary transition-colors">For DeFi Protocols</div>
-                <div class="text-sm text-kura-text-secondary line-clamp-2">Credit infrastructure & risk oracles</div>
               </NuxtLink>
             </div>
 
@@ -149,12 +137,6 @@
                   <a href="/" @click="isMobileMenuOpen = false; activeMobileSubmenu = null" class="block py-2 text-sm text-kura-text-secondary hover:text-kura-primary transition-colors">
                     Kura APP
                   </a>
-                  <NuxtLink to="/klhs" @click="isMobileMenuOpen = false; activeMobileSubmenu = null" class="block py-2 text-sm text-kura-text-secondary hover:text-kura-primary transition-colors">
-                    KLHS
-                  </NuxtLink>
-                  <NuxtLink to="/notary" @click="isMobileMenuOpen = false; activeMobileSubmenu = null" class="block py-2 text-sm text-kura-text-secondary hover:text-kura-primary transition-colors">
-                    Kura Notary
-                  </NuxtLink>
                 </div>
               </transition>
             </div>
@@ -177,9 +159,6 @@
                   </NuxtLink>
                   <NuxtLink to="/startups-llcs" @click="isMobileMenuOpen = false; activeMobileSubmenu = null" class="block py-2 text-sm text-kura-text-secondary hover:text-kura-primary transition-colors">
                     For Startups & LLCs
-                  </NuxtLink>
-                  <NuxtLink to="/defi-protocols" @click="isMobileMenuOpen = false; activeMobileSubmenu = null" class="block py-2 text-sm text-kura-text-secondary hover:text-kura-primary transition-colors">
-                    For DeFi Protocols
                   </NuxtLink>
                 </div>
               </transition>

@@ -38,19 +38,6 @@
       </div>
     </section>
 
-    <!-- Forward-Looking Innovation Section -->
-    <section class="innovation-section">
-      <div class="content-with-image">
-        <div class="image-placeholder"></div>
-        <div class="content-block">
-          <h2 class="innovation-title">The Kura Liquidity Health Score (KLHS)</h2>
-          <p class="innovation-text">
-            Beyond data aggregation, we are solving DeFi's biggest risk management flaw. We are pioneering KLHS—a Zero-Knowledge (ZK) powered credit oracle. By securely bridging traditional bank account utilization with on-chain lending history and DID verification, we empower protocols to offer undercollateralized loans to premium users while completely shielding user privacy.
-          </p>
-        </div>
-      </div>
-    </section>
-
     <!-- Join the Journey Section -->
     <section class="join-section">
       <div class="content-with-image content-reversed">
@@ -142,15 +129,15 @@
 import { reactive } from 'vue'
 
 useSeoMeta({
-  title: 'About Kura Finance | The Web3 Credit Oracle & Dashboard',
-  description: 'Building the ultimate hybrid finance infrastructure. Kura Finance combines a powerful cross-chain dashboard with KLHS, the first Zero-Knowledge credit oracle for DeFi.',
-  keywords: 'Web3 credit score, DeFi oracle, Kura Finance, KLHS, ZK proof identity, cross-border dashboard, Rick Weng',
+  title: 'About Kura Finance | The Web3 Dashboard',
+  description: 'Building the ultimate hybrid finance infrastructure. Kura Finance combines a powerful cross-chain dashboard with institutional-grade tools.',
+  keywords: 'Web3 dashboard, Kura Finance, cross-border dashboard, Rick Weng',
   ogTitle: 'About Kura Finance | Hybrid Finance Infrastructure',
-  ogDescription: 'From unified fiat-crypto dashboards to institutional-grade DeFi risk management. Discover the ecosystem behind Kura.',
+  ogDescription: 'From unified fiat-crypto dashboards to institutional-grade risk management. Discover the ecosystem behind Kura.',
   ogUrl: 'https://kura-finance.com/about',
   ogType: 'website',
   twitterCard: 'summary_large_image',
-  twitterTitle: 'About Kura Finance | The Web3 Credit Oracle'
+  twitterTitle: 'About Kura Finance | The Web3 Dashboard'
 });
 
 const milestones = reactive([
@@ -165,18 +152,6 @@ const milestones = reactive([
     title: 'KDID & Institutional Verification',
     content: 'Implementing robust KYC and integration with top-tier Web3 DID protocols (Palau RNS.id, Worldcoin) to establish a baseline of Sybil-resistant identities.',
     type: 'success'
-  },
-  {
-    time: 'Phase 3: Legal Immutability',
-    title: 'Kura Blockchain Notary',
-    content: 'Deploying a decentralized notary platform that provides immutable timestamps and cryptographic proof of existence for cross-border enterprise contracts.',
-    type: 'warning'
-  },
-  {
-    time: 'Phase 4: The Ultimate Infrastructure',
-    title: 'KLHS Credit Oracle',
-    content: 'Rolling out our Zero-Knowledge credit oracle for DeFi protocols, fundamentally upgrading Web3 lending from over-collateralized silos to reputation-based capital efficiency.',
-    type: 'error'
   }
 ])
 </script>

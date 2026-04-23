@@ -17,11 +17,11 @@
           </h1>
 
           <h2 class="text-2xl md:text-3xl font-bold text-kura-text-secondary">
-            Stop managing finances with spreadsheets. Unify fiat and on-chain assets, secure your legal infrastructure with blockchain notarization, and unlock capital efficiency with decentralized credit.
+            Stop managing finances with spreadsheets. Unify fiat and on-chain assets, and unlock institutional-grade treasury management for your organization.
           </h2>
 
           <p class="text-lg md:text-xl text-kura-text-secondary max-w-3xl mx-auto leading-relaxed">
-            For Web3-native startups and enterprises that need more than a dashboard—you need a complete financial operating system built on decentralized infrastructure.
+            For Web3-native startups and enterprises that need more than a dashboard—you need a complete financial operating system.
           </p>
 
           <div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
@@ -43,10 +43,10 @@
       <div class="max-w-6xl mx-auto">
         <div class="text-center mb-16">
           <h2 class="text-4xl md:text-5xl font-bold mb-6">
-            The Three Pillars of Enterprise Hybrid Finance
+            The Foundation of Enterprise Hybrid Finance
           </h2>
           <p class="text-lg text-kura-text-secondary max-w-3xl mx-auto">
-            A complete solution for managing treasury, unlocking capital, and building legal trust infrastructure.
+            A complete solution for managing treasury securely and transparently.
           </p>
         </div>
 
@@ -60,7 +60,7 @@
             </div>
             <div class="order-1 md:order-2 space-y-6">
               <div>
-                <p class="text-sm font-semibold text-kura-primary uppercase tracking-wider mb-2">Pillar 1</p>
+                <p class="text-sm font-semibold text-kura-primary uppercase tracking-wider mb-2">Core Feature</p>
                 <h3 class="text-3xl md:text-4xl font-bold mb-4">
                   Unified Treasury Dashboard
                 </h3>
@@ -97,101 +97,7 @@
             </div>
           </div>
 
-          <div class="h-px bg-gradient-to-r from-transparent via-kura-border to-transparent" />
 
-          <!-- Pillar 2 -->
-          <div class="grid md:grid-cols-2 gap-8 items-start">
-            <div class="space-y-6">
-              <div>
-                <p class="text-sm font-semibold text-kura-primary uppercase tracking-wider mb-2">Pillar 2</p>
-                <h3 class="text-3xl md:text-4xl font-bold mb-4">
-                  Unlock Capital Efficiency with KLHS
-                </h3>
-              </div>
-              <p class="text-lg text-kura-text-secondary leading-relaxed">
-                Tired of traditional banks refusing credit lines for Web3 companies? Stop over-relying on 150% overcollateralization. Kura's Liquidity Health Score (KLHS) uses zero-knowledge proofs to transform your healthy fiat cash flow into on-chain credit credentials, unlocking higher leverage and lower rates in DeFi lending pools.
-              </p>
-              <div class="space-y-3 pt-4">
-                <div class="flex gap-3">
-                  <div class="flex-shrink-0 w-6 h-6 rounded-full bg-kura-primary/20 flex items-center justify-center">
-                    <svg class="w-4 h-4 text-kura-primary" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <span class="text-kura-text-secondary">Convert fiat cash flow into decentralized credit scores via ZK proofs</span>
-                </div>
-                <div class="flex gap-3">
-                  <div class="flex-shrink-0 w-6 h-6 rounded-full bg-kura-primary/20 flex items-center justify-center">
-                    <svg class="w-4 h-4 text-kura-primary" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <span class="text-kura-text-secondary">Access DeFi liquidity pools with lower collateral ratios and competitive rates</span>
-                </div>
-                <div class="flex gap-3">
-                  <div class="flex-shrink-0 w-6 h-6 rounded-full bg-kura-primary/20 flex items-center justify-center">
-                    <svg class="w-4 h-4 text-kura-primary" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <span class="text-kura-text-secondary">Portable credit history that bridges traditional finance and DeFi</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div class="rounded-xl bg-kura-background-light border border-kura-border p-8 h-64 flex items-center justify-center">
-                <div class="text-center text-kura-text-secondary">KLHS Architecture Diagram</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="h-px bg-gradient-to-r from-transparent via-kura-border to-transparent" />
-
-          <!-- Pillar 3 -->
-          <div class="grid md:grid-cols-2 gap-8 items-start">
-            <div class="order-2 md:order-1">
-              <div class="rounded-xl bg-kura-background-light border border-kura-border p-8 h-64 flex items-center justify-center">
-                <div class="text-center text-kura-text-secondary">Notary Integration</div>
-              </div>
-            </div>
-            <div class="order-1 md:order-2 space-y-6">
-              <div>
-                <p class="text-sm font-semibold text-kura-primary uppercase tracking-wider mb-2">Pillar 3</p>
-                <h3 class="text-3xl md:text-4xl font-bold mb-4">
-                  Enterprise Trust Infrastructure
-                </h3>
-              </div>
-              <p class="text-lg text-kura-text-secondary leading-relaxed">
-                Use Kura Notary as your legal defense infrastructure. Create immutable on-chain digital fingerprints for cross-border contractor agreements, equity distribution documents, and critical code snapshots. Provide irrefutable proof of existence for future VC due diligence or compliance audits.
-              </p>
-              <div class="space-y-3 pt-4">
-                <div class="flex gap-3">
-                  <div class="flex-shrink-0 w-6 h-6 rounded-full bg-kura-primary/20 flex items-center justify-center">
-                    <svg class="w-4 h-4 text-kura-primary" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <span class="text-kura-text-secondary">Immutable blockchain timestamps for all critical contracts and agreements</span>
-                </div>
-                <div class="flex gap-3">
-                  <div class="flex-shrink-0 w-6 h-6 rounded-full bg-kura-primary/20 flex items-center justify-center">
-                    <svg class="w-4 h-4 text-kura-primary" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <span class="text-kura-text-secondary">IPFS + blockchain for decentralized, censorship-resistant document storage</span>
-                </div>
-                <div class="flex gap-3">
-                  <div class="flex-shrink-0 w-6 h-6 rounded-full bg-kura-primary/20 flex items-center justify-center">
-                    <svg class="w-4 h-4 text-kura-primary" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <span class="text-kura-text-secondary">Audit-ready proof of existence for VC due diligence and regulatory compliance</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
@@ -446,26 +352,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <div class="space-y-6">
-            <div class="flex gap-4">
-              <div class="flex-shrink-0">
-                <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-kura-primary/20 text-kura-primary">
-                  <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                </div>
-              </div>
-              <div>
-                <h3 class="text-xl font-bold mb-2">Blockchain Notary (Coming Soon)</h3>
-                <p class="text-gray-400">Immutable proof of financial state recorded on-chain. Perfect for investor reporting, legal proceedings, and compliance.</p>
-              </div>
-            </div>
-          </div>
-          <div class="bg-gradient-to-br from-kura-primary/10 to-kura-secondary/10 rounded-xl p-8 h-64 flex items-center justify-center border border-kura-primary/20">
-            <div class="text-center text-gray-400">Interface Preview</div>
-          </div>
-        </div>
+
       </div>
     </section>
 
@@ -564,10 +451,10 @@ definePageMeta({
 
 useSeoMeta({
   title: 'Enterprise Hybrid Treasury | For Startups & LLCs - Kura Finance',
-  description: 'Enterprise-grade treasury management for Web3-native startups and companies. Unify fiat and on-chain assets, unlock capital with KLHS, and secure legal infrastructure with blockchain notarization.',
-  keywords: 'enterprise treasury, startup financial management, hybrid finance, Web3 finance, DeFi lending, blockchain notary, KLHS, startup accounting, treasury management software',
+  description: 'Enterprise-grade treasury management for Web3-native startups and companies. Unify fiat and on-chain assets into a single dashboard.',
+  keywords: 'enterprise treasury, startup financial management, hybrid finance, Web3 finance, startup accounting, treasury management software',
   ogTitle: 'Enterprise Hybrid Treasury for Startups & LLCs',
-  ogDescription: 'Unify fiat and on-chain assets. Unlock capital efficiency. Build enterprise trust infrastructure on blockchain.',
+  ogDescription: 'Unify fiat and on-chain assets with Kura Finance dashboard.',
   ogUrl: 'https://kura-finance.com/startups-llcs',
   ogType: 'website',
   twitterCard: 'summary_large_image',

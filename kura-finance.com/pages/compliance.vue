@@ -39,18 +39,7 @@ Wilmington, DE 19801
                 We are a software infrastructure provider, not a custodian. Our system architecture is mathematically incapable of moving, trading, or accessing the underlying funds in your connected bank accounts or Web3 wallets.
               </p>
             </div>
-            <div>
-              <h3 class="text-lg font-semibold text-kura-text mb-2">Zero-Knowledge (ZK) Oracle (KLHS):</h3>
-              <p class="text-kura-text-secondary leading-relaxed">
-                When interacting with DeFi protocols via the Kura Liquidity Health Score, we employ Zero-Knowledge (ZK) proofs. Protocols only receive cryptographically verified risk attestations (e.g., boolean values or score brackets). Your raw fiat balances, bank account numbers, and full transaction history are never broadcasted on-chain or shared with third-party protocols.
-              </p>
-            </div>
-            <div>
-              <h3 class="text-lg font-semibold text-kura-text mb-2">Notary Hash Isolation:</h3>
-              <p class="text-kura-text-secondary leading-relaxed">
-                For Kura Notary services, we process and store only the SHA-256 cryptographic hashes of your documents. The actual contents and files never leave your local environment and are never stored on our servers.
-              </p>
-            </div>
+
             <div>
               <h3 class="text-lg font-semibold text-kura-text mb-2">Encryption Standards:</h3>
               <p class="text-kura-text-secondary leading-relaxed">
@@ -83,12 +72,7 @@ Wilmington, DE 19801
         <section>
           <h2 class="text-2xl font-bold text-kura-text mb-4">Regulatory Framework & Compliance Stance</h2>
           <div class="space-y-4">
-            <div>
-              <h3 class="text-lg font-semibold text-kura-text mb-2">FCRA Exemption (Not a Credit Bureau):</h3>
-              <p class="text-kura-text-secondary leading-relaxed">
-                Kura Finance LLC is not a Consumer Reporting Agency (CRA) under the Fair Credit Reporting Act (FCRA). KLHS is an on-chain liquidity metric built exclusively for Decentralized Finance (DeFi) smart contracts, not for traditional consumer credit, housing, or employment decisions.
-              </p>
-            </div>
+
             <div>
               <h3 class="text-lg font-semibold text-kura-text mb-2">Global Sanctions (OFAC) Compliance:</h3>
               <p class="text-kura-text-secondary leading-relaxed">
