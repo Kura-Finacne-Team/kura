@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Area, AreaChart, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,6 +89,19 @@ export default function DashboardPage() {
 
   const changePercent = assetHistorySummary?.changePercent ?? null;
   const changePositive = changePercent !== null && changePercent >= 0;
+  const placeholderWaveData = useMemo(
+    () => [
+      { t: '1', value: 12 },
+      { t: '2', value: 16 },
+      { t: '3', value: 14 },
+      { t: '4', value: 18 },
+      { t: '5', value: 11 },
+      { t: '6', value: 9 },
+      { t: '7', value: 13 },
+      { t: '8', value: 10 },
+    ],
+    [],
+  );
 
   return (
     <div className="w-full pb-24 px-6 sm:px-10 lg:px-16 pt-0 max-w-7xl mx-auto">
@@ -117,7 +130,13 @@ export default function DashboardPage() {
               <div className="w-full h-full rounded-xl bg-white/5 animate-pulse" />
             ) : chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                <AreaChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="totalAssetsAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis dataKey="label" stroke="rgba(255,255,255,0.3)" tick={{ fontSize: 12 }} />
                   <YAxis stroke="rgba(255,255,255,0.3)" width={40} tick={{ fontSize: 12 }} />
@@ -137,8 +156,16 @@ export default function DashboardPage() {
                     formatter={(value) => [`$${(value as number).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 'Total Assets']}
                     labelStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}
                   />
-                  <Line type="monotone" dataKey="value" stroke="#8B5CF6" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: '#8B5CF6', strokeWidth: 0 }} />
-                </LineChart>
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#8B5CF6"
+                    strokeWidth={2}
+                    fill="url(#totalAssetsAreaGradient)"
+                    dot={false}
+                    activeDot={{ r: 4, fill: '#8B5CF6', strokeWidth: 0 }}
+                  />
+                </AreaChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex h-full flex-col justify-end gap-3">
@@ -209,40 +236,85 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 w-full">
-        <Card className="min-h-[13.5rem]">
+        <Card className="min-h-[13.5rem] flex flex-col">
           <CardHeader>
             <CardDescription>Investment</CardDescription>
             <CardTitle className="text-2xl">$0.00</CardTitle>
             <CardDescription>Portfolio growth pending setup</CardDescription>
           </CardHeader>
-          <CardContent className="pt-4">
-            <Button variant="secondary" className="w-full">
+          <CardContent className="pt-0 flex-1 flex flex-col">
+            <div className="h-24 mb-4 rounded-lg bg-white/[0.02] border border-white/5 p-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={placeholderWaveData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                  <XAxis dataKey="t" hide />
+                  <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0B0B0F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                    formatter={(value) => [`$${(value as number).toFixed(2)}`, 'Assets']}
+                    labelStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}
+                  />
+                  <Line type="monotone" dataKey="value" stroke="#8B5CF6" strokeWidth={2} dot={false} activeDot={{ r: 3, fill: '#8B5CF6', strokeWidth: 0 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <Button variant="secondary" className="w-full mt-auto">
               View Details
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="min-h-[13.5rem]">
+        <Card className="min-h-[13.5rem] flex flex-col">
           <CardHeader>
             <CardDescription>Crypto</CardDescription>
             <CardTitle className="text-2xl">$0.00</CardTitle>
             <CardDescription>Connect your Web3 wallet</CardDescription>
           </CardHeader>
-          <CardContent className="pt-4">
-            <Button variant="secondary" className="w-full">
+          <CardContent className="pt-0 flex-1 flex flex-col">
+            <div className="h-24 mb-4 rounded-lg bg-white/[0.02] border border-white/5 p-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={placeholderWaveData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                  <XAxis dataKey="t" hide />
+                  <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0B0B0F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                    formatter={(value) => [`$${(value as number).toFixed(2)}`, 'Assets']}
+                    labelStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}
+                  />
+                  <Line type="monotone" dataKey="value" stroke="#8B5CF6" strokeWidth={2} dot={false} activeDot={{ r: 3, fill: '#8B5CF6', strokeWidth: 0 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <Button variant="secondary" className="w-full mt-auto">
               Connect Wallet
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="min-h-[13.5rem]">
+        <Card className="min-h-[13.5rem] flex flex-col">
           <CardHeader>
             <CardDescription>DeFi Protocol</CardDescription>
             <CardTitle className="text-2xl">$0.00</CardTitle>
             <CardDescription>Track your DeFi positions</CardDescription>
           </CardHeader>
-          <CardContent className="pt-4">
-            <Button variant="secondary" className="w-full">
+          <CardContent className="pt-0 flex-1 flex flex-col">
+            <div className="h-24 mb-4 rounded-lg bg-white/[0.02] border border-white/5 p-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={placeholderWaveData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                  <XAxis dataKey="t" hide />
+                  <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0B0B0F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                    formatter={(value) => [`$${(value as number).toFixed(2)}`, 'Assets']}
+                    labelStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}
+                  />
+                  <Line type="monotone" dataKey="value" stroke="#8B5CF6" strokeWidth={2} dot={false} activeDot={{ r: 3, fill: '#8B5CF6', strokeWidth: 0 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <Button variant="secondary" className="w-full mt-auto">
               Add Protocol
             </Button>
           </CardContent>
