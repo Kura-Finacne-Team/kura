@@ -2,6 +2,11 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function SecurityPage() {
@@ -12,7 +17,6 @@ export default function SecurityPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -43,130 +47,105 @@ export default function SecurityPage() {
   return (
     <div className="w-full pb-10 px-8 pt-10">
       <div className="max-w-3xl mx-auto">
-        {/* 頁面標題 */}
         <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-gray-400 hover:text-white transition-colors mb-4"
-          >
+          <Button onClick={() => router.back()} variant="ghost" className="mb-4 px-0 text-gray-400 hover:text-white hover:bg-transparent">
             ← Back
-          </button>
+          </Button>
           <h1 className="text-3xl font-bold text-white">Security Settings</h1>
           <p className="text-gray-400 mt-2">Manage your security preferences and authentication methods</p>
         </div>
 
-        {/* 訊息區 */}
         {successMessage && (
-          <div className="mb-6 p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm">
-            {successMessage}
-          </div>
+          <Alert variant="success" className="mb-6">
+            <AlertDescription>{successMessage}</AlertDescription>
+          </Alert>
         )}
         {errorMessage && (
-          <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-            {errorMessage}
-          </div>
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
         )}
 
-        {/* 分頁 */}
-        <div className="mb-8 flex gap-4 border-b border-white/10">
-          <button
-            onClick={() => setActiveTab('passkeys')}
-            className={`px-4 py-3 font-medium transition-colors ${
-              activeTab === 'passkeys'
-                ? 'text-[#8B5CF6] border-b-2 border-[#8B5CF6]'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Passkeys
-          </button>
-          <button
-            onClick={() => setActiveTab('2fa')}
-            className={`px-4 py-3 font-medium transition-colors ${
-              activeTab === '2fa'
-                ? 'text-[#8B5CF6] border-b-2 border-[#8B5CF6]'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Two-Factor Auth
-          </button>
-          <button
-            onClick={() => setActiveTab('password')}
-            className={`px-4 py-3 font-medium transition-colors ${
-              activeTab === 'password'
-                ? 'text-[#8B5CF6] border-b-2 border-[#8B5CF6]'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Password
-          </button>
+        <div className="mb-8 flex gap-2 border-b border-white/10 pb-2">
+          {[
+            { key: 'passkeys', label: 'Passkeys' },
+            { key: '2fa', label: 'Two-Factor Auth' },
+            { key: 'password', label: 'Password' },
+          ].map((tab) => (
+            <Button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as 'passkeys' | '2fa' | 'password')}
+              variant={activeTab === tab.key ? 'secondary' : 'ghost'}
+              className={cn(activeTab === tab.key ? 'text-[#C4B5FD]' : 'text-gray-400')}
+            >
+              {tab.label}
+            </Button>
+          ))}
         </div>
 
-        {/* 通行金鑰分頁 */}
         {activeTab === 'passkeys' && (
-          <div className="p-6 rounded-xl border border-white/10 bg-[#0B0B0F]">
-            <h2 className="text-lg font-semibold text-white mb-2">Passkeys</h2>
-            <p className="text-gray-400 text-sm">
-              Passkey management is not available yet. This page now only shows implemented security features.
-            </p>
-          </div>
+          <Card className="bg-[#0B0B0F]">
+            <CardHeader>
+              <CardTitle>Passkeys</CardTitle>
+              <CardDescription>
+                Passkey management is not available yet. This page now only shows implemented security features.
+              </CardDescription>
+            </CardHeader>
+          </Card>
         )}
 
-        {/* 2FA 分頁 */}
         {activeTab === '2fa' && (
-          <div className="p-6 rounded-xl border border-white/10 bg-[#0B0B0F]">
-            <h2 className="text-lg font-semibold text-white mb-2">Two-Factor Authentication</h2>
-            <p className="text-gray-400 text-sm">
-              2FA setup is not available yet. This page now only shows implemented security features.
-            </p>
-          </div>
+          <Card className="bg-[#0B0B0F]">
+            <CardHeader>
+              <CardTitle>Two-Factor Authentication</CardTitle>
+              <CardDescription>
+                2FA setup is not available yet. This page now only shows implemented security features.
+              </CardDescription>
+            </CardHeader>
+          </Card>
         )}
 
-        {/* 密碼分頁 */}
         {activeTab === 'password' && (
-          <div className="p-6 rounded-xl border border-white/10 bg-[#0B0B0F]">
-            <h2 className="text-lg font-semibold text-white mb-6">Change Password</h2>
-            <div className="space-y-4">
+          <Card className="bg-[#0B0B0F]">
+            <CardHeader>
+              <CardTitle>Change Password</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">New Password</label>
-                <input
+                <Input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter your new password"
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#8B5CF6] transition-colors"
                 />
                 <p className="text-gray-400 text-sm mt-2">At least 8 characters</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Confirm New Password</label>
-                <input
+                <Input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm your new password"
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#8B5CF6] transition-colors"
                 />
               </div>
               <div className="flex gap-3 pt-4">
-                <button
+                <Button
                   onClick={() => {
                     setNewPassword('');
                     setConfirmPassword('');
                   }}
-                  className="px-6 py-3 rounded-lg border border-white/10 text-white hover:bg-white/5 transition-colors font-medium"
+                  variant="outline"
                 >
                   Cancel
-                </button>
-                <button
-                  onClick={handleChangePassword}
-                  disabled={isLoading}
-                  className="px-6 py-3 rounded-lg bg-[#8B5CF6] hover:bg-[#8B5CF6]/80 text-white transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+                </Button>
+                <Button onClick={handleChangePassword} disabled={isLoading}>
                   {isLoading ? 'Changing...' : 'Change Password'}
-                </button>
+                </Button>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

@@ -3,6 +3,7 @@
 import React from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { useRouter } from 'next/navigation';
+import { Card, CardContent } from '@/components/ui/card';
 import TopNav from '@/components/TopNav';
 import Sidebar from './_components/Sidebar';
 
@@ -25,12 +26,14 @@ export default function DashboardLayout({
   if (authStatus === 'loading') {
     return (
       <div className="flex items-center justify-center h-screen w-full">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#8B5CF6]/20 mb-4">
-            <div className="w-8 h-8 border-2 border-[#8B5CF6] border-t-transparent rounded-full animate-spin" />
-          </div>
-          <p className="text-gray-400">Loading...</p>
-        </div>
+        <Card className="bg-[#0B0B0F]">
+          <CardContent className="pt-6 text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#8B5CF6]/20 mb-4">
+              <div className="w-8 h-8 border-2 border-[#8B5CF6] border-t-transparent rounded-full animate-spin" />
+            </div>
+            <p className="text-gray-400">Loading...</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }

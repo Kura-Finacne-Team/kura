@@ -4,6 +4,7 @@
 import React, { useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
 import UserSettingsDrawer from './UserSettingsDrawer';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -39,10 +40,12 @@ export default function TopNav() {
         {/* 右側控制區 */}
         <div className="flex items-center gap-4">
           {/* 使用者頭像 (點擊開啟浮動視窗) */}
-          <button 
+          <Button
             ref={avatarButtonRef}
             onClick={() => setIsSettingsOpen(true)}
-            className="w-7 h-7 rounded-full border border-[#1A1A24] overflow-hidden hover:border-[#8B5CF6] transition-colors focus:outline-none cursor-pointer"
+            variant="ghost"
+            size="icon"
+            className="w-8 h-8 rounded-full border border-[#1A1A24] p-0 overflow-hidden hover:border-[#8B5CF6] hover:bg-transparent"
           >
             {userProfile.avatarUrl ? (
               <Image
@@ -58,7 +61,7 @@ export default function TopNav() {
                 {avatarInitial}
               </div>
             )}
-          </button>
+          </Button>
         </div>
       </header>
 

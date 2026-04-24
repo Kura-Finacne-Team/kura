@@ -4,6 +4,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 interface NavLinkProps {
   href: string;
@@ -13,16 +15,13 @@ interface NavLinkProps {
 
 function NavLink({ href, label, isActive }: NavLinkProps) {
   return (
-    <Link 
-      href={href}
-      className={`block w-full px-4 py-3 rounded-lg transition-colors text-sm font-medium ${
-        isActive 
-          ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]' 
-          : 'text-gray-400 hover:bg-[#1A1A24] hover:text-white'
-      }`}
+    <Button
+      asChild
+      variant={isActive ? 'secondary' : 'ghost'}
+      className={`w-full justify-start ${isActive ? 'text-[#C4B5FD] border-[#8B5CF6]/30 bg-[#8B5CF6]/20' : 'text-gray-400 hover:text-white'}`}
     >
-      {label}
-    </Link>
+      <Link href={href}>{label}</Link>
+    </Button>
   );
 }
 
@@ -38,8 +37,6 @@ export default function Sidebar() {
   const isBudget = pathname.includes('/dashboard/budget');
   const isImpermanentLoss = pathname.includes('/dashboard/impermanent-loss');
   const isTaxCalculator = pathname.includes('/dashboard/tax-calculator');
-  const isDid = pathname.includes('/dashboard/did');
-  const isKLHS = pathname.includes('/dashboard/klhs');
 
   return (
     <nav className="relative z-10 w-56 border-r border-[#1A1A24] bg-[#0B0B0F] py-6 px-2 flex flex-col gap-0 shrink-0 transition-all duration-300 ease-in-out h-full overflow-hidden">
@@ -48,7 +45,7 @@ export default function Sidebar() {
       <NavLink href="/dashboard" label="Home" isActive={isHome} />
       
       {/* 分隔線 */}
-      <div className="my-3 border-t border-gray-800" />
+      <Separator className="my-3 bg-gray-800" />
 
       {/* 主要區段 */}
       <div className="space-y-2 mb-3">
@@ -59,22 +56,13 @@ export default function Sidebar() {
       </div>
 
       {/* 分隔線 */}
-      <div className="my-3 border-t border-gray-800" />
+      <Separator className="my-3 bg-gray-800" />
 
       {/* 次要區段 */}
       <div className="space-y-2">
         <NavLink href="/dashboard/budget" label="Budget" isActive={isBudget} />
         <NavLink href="/dashboard/impermanent-loss" label="Impermanent Loss" isActive={isImpermanentLoss} />
         <NavLink href="/dashboard/tax-calculator" label="Tax Calculator" isActive={isTaxCalculator} />
-      </div>
-
-      {/* 分隔線 */}
-      <div className="my-3 border-t border-gray-800" />
-
-      {/* 第三區段 */}
-      <div className="space-y-2">
-        <NavLink href="/dashboard/did" label="Kura DID" isActive={isDid} />
-        <NavLink href="/dashboard/klhs" label="KLHS" isActive={isKLHS} />
       </div>
 
     </nav>
