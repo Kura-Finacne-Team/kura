@@ -25,6 +25,9 @@ export function middleware(request: NextRequest) {
     'wss://relay.reown.com',
     'wss://*.reown.com',
     'https://api.reown.org',
+    'https://api.web3modal.org',
+    'https://*.walletconnect.org',
+    'https://*.walletconnect.com',
     'https://static.cloudflareinsights.com', // Cloudflare Insights
     'https://app.kura-finance.com', // Explicitly add app domain
     'https://api.kura-finance.com', // Explicitly add API domain
@@ -35,24 +38,28 @@ export function middleware(request: NextRequest) {
     "'self'",
     "'unsafe-inline'",
     ...(isDevelopment ? ["'unsafe-eval'"] : []), // Allow eval() for React dev mode debugging
+    requestOrigin,
+    appDomain,
+    'https://app.kura-finance.com',
     'https://cdn.plaid.com',
     'https://*.plaid.com',
     'https://static.cloudflareinsights.com', // Cloudflare Insights
   ].join(' ');
 
-  // Set CSP header
-  response.headers.set(
-    'Content-Security-Policy',
-    `
-      default-src 'self';
-      script-src ${scriptSources};
-      connect-src ${connectSources};
-      img-src 'self' data: https: blob:;
-      font-src 'self' data: https:;
-      style-src 'self' 'unsafe-inline';
-      frame-src 'self' https://cdn.plaid.com https://*.plaid.com wss://relay.reown.com wss://*.reown.com;
-    `.replace(/\s+/g, ' ').trim()
-  );
+  const cspValue = `
+    default-src 'self';
+    script-src ${scriptSources};
+    connect-src ${connectSources};
+    img-src 'self' data: https: blob:;
+    font-src 'self' data: https:;
+    style-src 'self' 'unsafe-inline';
+    frame-src 'self' https://cdn.plaid.com https://*.plaid.com;
+    frame-ancestors 'self';
+  `.replace(/\s+/g, ' ').trim();
+
+  // Set both enforce and report-only CSP to avoid stale platform-level report-only policies.
+  response.headers.set('Content-Security-Policy', cspValue);
+  response.headers.set('Content-Security-Policy-Report-Only', cspValue);
 
   // Allow cross-origin resource sharing for scripts
   response.headers.set('Access-Control-Allow-Origin', '*');

@@ -18,6 +18,8 @@ const ConnectAccountModal = dynamic(() => import('@/components/ConnectAccountMod
 export default function DashboardPage() {
   const isBalanceHidden = useAppStore((state) => state.isBalanceHidden);
   const accounts = useFinanceStore((state) => state.accounts);
+  const investmentAccounts = useFinanceStore((state) => state.investmentAccounts);
+  const investments = useFinanceStore((state) => state.investments);
   const transactions = useFinanceStore((state) => state.transactions);
   const apiAssetHistory = useFinanceStore((state) => state.apiAssetHistory);
   const assetHistorySummary = useFinanceStore((state) => state.assetHistorySummary);
@@ -145,9 +147,65 @@ export default function DashboardPage() {
     [],
   );
 
+  const accountValueById = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of investments) {
+      const value = (Number(item.holdings) || 0) * (Number(item.currentPrice) || 0);
+      map.set(item.accountId, (map.get(item.accountId) || 0) + value);
+    }
+    return map;
+  }, [investments]);
+
+  const miniCardTableData = useMemo(() => {
+    const investmentRows = investmentAccounts
+      .filter((account) => account.type === 'Broker')
+      .map((account) => ({
+        id: account.id,
+        name: account.name,
+        subtitle: account.type,
+        value: accountValueById.get(account.id) || 0,
+      }));
+
+    const cryptoRowsFromBanking = accounts
+      .filter((account) => account.type === 'crypto')
+      .map((account) => ({
+        id: account.id,
+        name: account.name,
+        subtitle: 'Crypto account',
+        value: Number(account.balance) || 0,
+      }));
+
+    const cryptoRowsFromInvestments = investmentAccounts
+      .filter((account) => account.type === 'Exchange' || account.type === 'Web3 Wallet')
+      .map((account) => ({
+        id: account.id,
+        name: account.name,
+        subtitle: account.type,
+        value: accountValueById.get(account.id) || 0,
+      }));
+
+    const defiRows = investmentAccounts
+      .filter((account) => /defi|protocol/i.test(account.name))
+      .map((account) => ({
+        id: account.id,
+        name: account.name,
+        subtitle: 'Protocol',
+        value: accountValueById.get(account.id) || 0,
+      }));
+
+    return {
+      investment: investmentRows,
+      crypto: [...cryptoRowsFromBanking, ...cryptoRowsFromInvestments],
+      defi: defiRows,
+    };
+  }, [accounts, accountValueById, investmentAccounts]);
+
   const maskAmount = (amountText: string): string => {
     return isBalanceHidden ? '••••••' : amountText;
   };
+
+  const formatMoney = (value: number): string =>
+    `$${Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
     <div className="w-full pb-24 px-6 sm:px-10 lg:px-16 pt-0 max-w-7xl mx-auto">
@@ -297,7 +355,16 @@ export default function DashboardPage() {
             <CardHeader className="pb-3">
               <CardDescription>{card.title}</CardDescription>
               <div className="flex items-baseline gap-3 flex-wrap">
-                <CardTitle className="text-2xl">{maskAmount(card.value)}</CardTitle>
+                <CardTitle className="text-2xl">
+                  {maskAmount(
+                    formatMoney(
+                      miniCardTableData[card.key as 'investment' | 'crypto' | 'defi'].reduce(
+                        (sum, row) => sum + row.value,
+                        0,
+                      ) || Number(card.value.replace(/[$,]/g, '')) || 0,
+                    ),
+                  )}
+                </CardTitle>
                 <Badge variant={card.changeVariant}>
                   {isBalanceHidden ? '••••' : card.change} <span className="ml-1 opacity-70">30d</span>
                 </Badge>
@@ -305,38 +372,59 @@ export default function DashboardPage() {
               <CardDescription>{card.description}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0 flex-1 flex flex-col">
-              <div className="h-24 mb-4 rounded-lg bg-[var(--kura-border-light)] border border-[var(--kura-border)] p-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={placeholderWaveData}>
-                    <defs>
-                      <linearGradient id={card.gradientId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--kura-primary)" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="var(--kura-primary)" stopOpacity={0.02} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="t" hide />
-                    <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'var(--kura-bg-light)',
-                        border: '1px solid var(--kura-border)',
-                        borderRadius: '8px',
-                      }}
-                      formatter={(value) => [isBalanceHidden ? '••••••' : `$${(value as number).toFixed(2)}`, card.title]}
-                      labelStyle={{ color: 'var(--kura-text-secondary)', fontSize: '11px' }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="var(--kura-primary)"
-                      strokeWidth={2}
-                      fill={`url(#${card.gradientId})`}
-                      dot={false}
-                      activeDot={{ r: 3, fill: 'var(--kura-primary)', strokeWidth: 0 }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              {miniCardTableData[card.key as 'investment' | 'crypto' | 'defi'].length > 0 ? (
+                <div className="mb-4 rounded-lg border border-[var(--kura-border)] overflow-hidden">
+                  <div className="max-h-24 overflow-y-auto hide-scrollbar">
+                    {miniCardTableData[card.key as 'investment' | 'crypto' | 'defi']
+                      .slice(0, 3)
+                      .map((row) => (
+                        <div
+                          key={row.id}
+                          className="flex items-center justify-between gap-3 px-3 py-2 border-b border-[var(--kura-border-light)] last:border-0"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{row.name}</p>
+                            <p className="text-xs text-[var(--kura-text-secondary)] truncate">{row.subtitle}</p>
+                          </div>
+                          <p className="text-sm font-mono text-emerald-400">{maskAmount(formatMoney(row.value))}</p>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-24 mb-4 rounded-lg bg-[var(--kura-border-light)] border border-[var(--kura-border)] p-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={placeholderWaveData}>
+                      <defs>
+                        <linearGradient id={card.gradientId} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--kura-primary)" stopOpacity={0.3} />
+                          <stop offset="100%" stopColor="var(--kura-primary)" stopOpacity={0.02} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="t" hide />
+                      <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'var(--kura-bg-light)',
+                          border: '1px solid var(--kura-border)',
+                          borderRadius: '8px',
+                        }}
+                        formatter={(value) => [isBalanceHidden ? '••••••' : `$${(value as number).toFixed(2)}`, card.title]}
+                        labelStyle={{ color: 'var(--kura-text-secondary)', fontSize: '11px' }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke="var(--kura-primary)"
+                        strokeWidth={2}
+                        fill={`url(#${card.gradientId})`}
+                        dot={false}
+                        activeDot={{ r: 3, fill: 'var(--kura-primary)', strokeWidth: 0 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
               <Button variant="secondary" className="w-full mt-auto">
                 {card.actionLabel}
               </Button>
