@@ -4,7 +4,6 @@
 import React, { useRef, useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import ThemeToggle from './ThemeToggle';
 import UserSettingsDrawer from './UserSettingsDrawer';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -13,6 +12,8 @@ export default function TopNav() {
   const avatarButtonRef = useRef<HTMLButtonElement>(null);
   const userProfile = useAppStore(state => state.userProfile);
   const authStatus = useAppStore(state => state.authStatus);
+  const isBalanceHidden = useAppStore((state) => state.isBalanceHidden);
+  const toggleBalanceVisibility = useAppStore((state) => state.toggleBalanceVisibility);
   const displayName = userProfile.displayName.trim();
   const avatarInitial = displayName ? displayName.slice(0, 1).toUpperCase() : '?';
 
@@ -26,7 +27,28 @@ export default function TopNav() {
       <header className="w-full flex justify-end items-center px-6 py-2.5 bg-[var(--kura-bg-light)]/80 backdrop-blur-md z-40 shrink-0">
         {/* 右側控制區 */}
         <div className="flex items-center gap-4">
-          <ThemeToggle />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={toggleBalanceVisibility}
+            aria-label={isBalanceHidden ? 'Show balances' : 'Hide balances'}
+            className="w-8 h-8 rounded-full border border-[var(--kura-border)] text-[var(--kura-text-secondary)] hover:text-[var(--kura-text)]"
+          >
+            {isBalanceHidden ? (
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 3l18 18" />
+                <path d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58" />
+                <path d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 5 9 7a7.73 7.73 0 01-3.33 4.95" />
+                <path d="M6.61 6.61C4.06 8.12 2.33 10.11 2 12c0 2 4 7 10 7a11.4 11.4 0 004.14-.74" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            )}
+          </Button>
           {/* 使用者頭像 (點擊開啟浮動視窗) */}
           <Button
             ref={avatarButtonRef}

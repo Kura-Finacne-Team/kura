@@ -66,8 +66,9 @@ export default function RootLayout({
               try {
                 var stored = localStorage.getItem('kura-theme');
                 var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                var mode = stored === 'light' || stored === 'dark' ? stored : (prefersDark ? 'dark' : 'light');
-                if (mode === 'dark') document.documentElement.classList.add('dark');
+                var mode = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+                var useDark = mode === 'dark' || (mode === 'system' && prefersDark);
+                document.documentElement.classList.toggle('dark', useDark);
               } catch (_) {}
             })();
           `}

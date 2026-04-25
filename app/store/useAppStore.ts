@@ -39,6 +39,7 @@ interface AppState {
   authStatus: 'loading' | 'authenticated' | 'unauthenticated';
   userProfile: UserProfile;
   preferences: UserPreferences;
+  isBalanceHidden: boolean;
   plaidLinkToken: string | null;
   authToken: string | null;
   authError: string | null;
@@ -58,6 +59,7 @@ interface AppState {
   setBaseCurrency: (currency: BaseCurrency) => void;
   toggleLargeTransactionAlerts: () => void;
   toggleWeeklyAiSummary: () => void;
+  toggleBalanceVisibility: () => void;
   setPlaidLinkToken: (token: string | null) => void;
   clearAuthSession: () => void;
   hydrateUserProfile: () => Promise<void>;
@@ -81,6 +83,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     largeTransactionAlerts: false,
     weeklyAiSummary: false,
   },
+  isBalanceHidden: false,
   plaidLinkToken: null,
   authToken: null,
   authError: null,
@@ -245,6 +248,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         return;
       }
 
+      set({ isBalanceHidden: localStorage.getItem('kura-hide-balance') === '1' });
+
       // Web 客戶端：Token 在 HttpOnly Cookie 中，直接嘗試呼叫 API
       console.debug('[AppStore] Web client - attempting to fetch profile from cookie');
       try {
@@ -324,6 +329,15 @@ export const useAppStore = create<AppState>((set, get) => ({
         weeklyAiSummary: !state.preferences.weeklyAiSummary,
       },
     })),
+
+  toggleBalanceVisibility: () =>
+    set((state) => {
+      const nextHidden = !state.isBalanceHidden;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('kura-hide-balance', nextHidden ? '1' : '0');
+      }
+      return { isBalanceHidden: nextHidden };
+    }),
 
   setPlaidLinkToken: (plaidLinkToken) => set({ plaidLinkToken }),
 

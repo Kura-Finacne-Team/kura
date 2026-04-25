@@ -10,15 +10,33 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { useAppStore } from '@/store/useAppStore';
 
+type ThemeMode = 'light' | 'dark' | 'system';
+
 interface UserSettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   anchorRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
+function getInitialThemeMode(): ThemeMode {
+  if (typeof window === 'undefined') return 'light';
+  const stored = localStorage.getItem('kura-theme');
+  if (stored === 'light' || stored === 'dark' || stored === 'system') return stored;
+  return 'system';
+}
+
+function applyThemeMode(mode: ThemeMode) {
+  const root = document.documentElement;
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const useDark = mode === 'dark' || (mode === 'system' && prefersDark);
+  root.classList.toggle('dark', useDark);
+  localStorage.setItem('kura-theme', mode);
+}
+
 export default function UserSettingsDrawer({ isOpen, onClose, anchorRef }: UserSettingsDrawerProps) {
   const [mounted, setMounted] = useState(false);
   const [position, setPosition] = useState({ top: 0, right: 0 });
+  const [themeMode, setThemeMode] = useState<ThemeMode>(getInitialThemeMode);
   const router = useRouter();
   const { userProfile, logout } = useAppStore();
 
@@ -36,6 +54,20 @@ export default function UserSettingsDrawer({ isOpen, onClose, anchorRef }: UserS
       });
     }
   }, [isOpen, anchorRef]);
+
+  useEffect(() => {
+    applyThemeMode(themeMode);
+  }, [themeMode]);
+
+  useEffect(() => {
+    if (themeMode !== 'system') return;
+
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => applyThemeMode('system');
+
+    media.addEventListener('change', handleChange);
+    return () => media.removeEventListener('change', handleChange);
+  }, [themeMode]);
 
   const handleLogout = async () => {
     await logout();
@@ -108,6 +140,33 @@ export default function UserSettingsDrawer({ isOpen, onClose, anchorRef }: UserS
                       Privacy ↗
                     </a>
                   </Button>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <CardDescription className="text-xs uppercase tracking-wide">Appearance</CardDescription>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button
+                      type="button"
+                      variant={themeMode === 'light' ? 'default' : 'secondary'}
+                      onClick={() => setThemeMode('light')}
+                    >
+                      Light
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={themeMode === 'dark' ? 'default' : 'secondary'}
+                      onClick={() => setThemeMode('dark')}
+                    >
+                      Dark
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={themeMode === 'system' ? 'default' : 'secondary'}
+                      onClick={() => setThemeMode('system')}
+                    >
+                      System
+                    </Button>
+                  </div>
                 </div>
                 <Separator />
                 <Button variant="destructive" className="w-full" onClick={handleLogout}>

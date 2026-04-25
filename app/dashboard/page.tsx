@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { useAppStore } from '../store/useAppStore';
 import { useFinanceStore } from '../store/useFinanceStore';
 
 const ConnectAccountModal = dynamic(() => import('@/components/ConnectAccountModal'), {
@@ -15,6 +16,7 @@ const ConnectAccountModal = dynamic(() => import('@/components/ConnectAccountMod
 });
 
 export default function DashboardPage() {
+  const isBalanceHidden = useAppStore((state) => state.isBalanceHidden);
   const accounts = useFinanceStore((state) => state.accounts);
   const transactions = useFinanceStore((state) => state.transactions);
   const apiAssetHistory = useFinanceStore((state) => state.apiAssetHistory);
@@ -143,6 +145,10 @@ export default function DashboardPage() {
     [],
   );
 
+  const maskAmount = (amountText: string): string => {
+    return isBalanceHidden ? '••••••' : amountText;
+  };
+
   return (
     <div className="w-full pb-24 px-6 sm:px-10 lg:px-16 pt-0 max-w-7xl mx-auto">
       {isConnectModalOpen && (
@@ -155,7 +161,7 @@ export default function DashboardPage() {
             <CardDescription className="text-sm">Total Assets</CardDescription>
             <div className="flex items-baseline gap-3 flex-wrap">
               <CardTitle className="text-2xl md:text-3xl xl:text-4xl">
-                ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {maskAmount(`$${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)}
               </CardTitle>
               {changePercent !== null && (
                 <Badge variant={changePositive ? 'success' : 'destructive'}>
@@ -196,7 +202,10 @@ export default function DashboardPage() {
                         hour12: false,
                       });
                     }}
-                    formatter={(value) => [`$${(value as number).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 'Total Assets']}
+                    formatter={(value) => [
+                      isBalanceHidden ? '••••••' : `$${(value as number).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+                      'Total Assets',
+                    ]}
                     labelStyle={{ color: 'var(--kura-text-secondary)', fontSize: '11px' }}
                   />
                   <Area
@@ -266,7 +275,7 @@ export default function DashboardPage() {
                       <p className="font-medium text-sm truncate">{accountDisplayName}</p>
                     </div>
                     <p className={`font-mono font-medium text-sm ${account.type === 'credit' ? 'text-red-400' : 'text-green-400'}`}>
-                      {displayBalance}
+                      {maskAmount(displayBalance)}
                     </p>
                   </div>
                 );
@@ -288,9 +297,9 @@ export default function DashboardPage() {
             <CardHeader className="pb-3">
               <CardDescription>{card.title}</CardDescription>
               <div className="flex items-baseline gap-3 flex-wrap">
-                <CardTitle className="text-2xl">{card.value}</CardTitle>
+                <CardTitle className="text-2xl">{maskAmount(card.value)}</CardTitle>
                 <Badge variant={card.changeVariant}>
-                  {card.change} <span className="ml-1 opacity-70">30d</span>
+                  {isBalanceHidden ? '••••' : card.change} <span className="ml-1 opacity-70">30d</span>
                 </Badge>
               </div>
               <CardDescription>{card.description}</CardDescription>
@@ -313,7 +322,7 @@ export default function DashboardPage() {
                         border: '1px solid var(--kura-border)',
                         borderRadius: '8px',
                       }}
-                      formatter={(value) => [`$${(value as number).toFixed(2)}`, card.title]}
+                      formatter={(value) => [isBalanceHidden ? '••••••' : `$${(value as number).toFixed(2)}`, card.title]}
                       labelStyle={{ color: 'var(--kura-text-secondary)', fontSize: '11px' }}
                     />
                     <Area
@@ -356,7 +365,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <p className={`font-mono font-medium text-sm ${transaction.type === 'credit' ? 'text-red-400' : 'text-green-400'}`}>
-                      {transaction.type === 'credit' ? '-' : '+'} ${transaction.amount}
+                      {maskAmount(`${transaction.type === 'credit' ? '-' : '+'} $${transaction.amount}`)}
                     </p>
                     <p className="text-gray-500 text-xs mt-1">{transaction.accountName}</p>
                   </div>
