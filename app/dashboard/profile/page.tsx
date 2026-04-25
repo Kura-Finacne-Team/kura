@@ -15,7 +15,6 @@ export default function ProfilePage() {
 
   const [displayName, setDisplayNameInput] = useState(userProfile.displayName);
   const [email] = useState(userProfile.email);
-  const [appearance, setAppearance] = useState<'light' | 'dark'>('dark');
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -120,38 +119,6 @@ export default function ProfilePage() {
             <CardDescription className="mt-2">
               This is how your name appears across the platform
             </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card className="mb-8 bg-[#0B0B0F]">
-          <CardHeader>
-            <CardTitle>Appearance</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button
-                type="button"
-                variant={appearance === 'dark' ? 'secondary' : 'outline'}
-                className="h-auto justify-start p-4"
-                onClick={() => setAppearance('dark')}
-              >
-                <div className="text-left">
-                  <p className="text-white font-medium">Dark Mode</p>
-                  <p className="text-gray-400 text-sm">Easier on the eyes at night</p>
-                </div>
-              </Button>
-              <Button
-                type="button"
-                variant={appearance === 'light' ? 'secondary' : 'outline'}
-                className="h-auto justify-start p-4"
-                onClick={() => setAppearance('light')}
-              >
-                <div className="text-left">
-                  <p className="text-white font-medium">Light Mode</p>
-                  <p className="text-gray-400 text-sm">Bright and clean interface</p>
-                </div>
-              </Button>
-            </div>
           </CardContent>
         </Card>
 
