@@ -47,7 +47,7 @@ interface AppState {
   // 認證方法
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  changePassword: (newPassword: string) => Promise<void>;
+  changePassword: (resetCode: string, newPassword: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   resetPassword: (email: string, resetCode: string, newPassword: string) => Promise<void>;
   requestRegistrationCode: (email: string) => Promise<void>;
@@ -144,12 +144,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  changePassword: async (newPassword: string) => {
+  changePassword: async (resetCode: string, newPassword: string) => {
     try {
       console.debug('[AppStore] Changing password (SRP)');
       const email = get().userProfile?.email;
       if (!email) throw new Error('Current user email is missing.');
-      await zkChangePassword(email, newPassword);
+      await zkChangePassword(email, resetCode, newPassword);
       console.info('[AppStore] Password changed successfully');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Password change failed';

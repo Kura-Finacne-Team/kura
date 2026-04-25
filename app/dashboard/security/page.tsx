@@ -12,7 +12,7 @@ export default function SecurityPage() {
   const router = useRouter();
   const userEmail = useAppStore((state) => state.userProfile.email);
   const requestPasswordReset = useAppStore((state) => state.requestPasswordReset);
-  const resetPassword = useAppStore((state) => state.resetPassword);
+  const changePassword = useAppStore((state) => state.changePassword);
 
   const [step, setStep] = useState<'request' | 'verify'>('request');
   const [isLoading, setIsLoading] = useState(false);
@@ -62,7 +62,7 @@ export default function SecurityPage() {
       setIsLoading(true);
       setErrorMessage('');
       setSuccessMessage('');
-      await resetPassword(userEmail, resetCode.trim(), newPassword);
+      await changePassword(resetCode.trim(), newPassword);
       setStep('request');
       setResetCode('');
       setNewPassword('');

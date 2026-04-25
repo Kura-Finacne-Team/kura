@@ -101,17 +101,29 @@ export const updateCurrentUserProfile = (
  * 變更密碼 (SRP)
  */
 export const changePassword = (
+  email: string,
+  resetCode: string,
   srpSalt: string,
   srpVerifier: string,
   encryptedDataKey: string,
   kekSalt: string
 ): Promise<GenericAuthResult> => {
+  const normalizedEmail = normalizeEmail(email);
+  const normalizedResetCode = resetCode.trim();
+  if (!/^\d{6}$/.test(normalizedResetCode)) {
+    throw new Error('resetCode must be a 6-digit numeric string.');
+  }
   const normalizedPayload = normalizeSrpPayload(srpSalt, srpVerifier, encryptedDataKey, kekSalt);
   return apiRequest<GenericAuthResult>(
-    '/api/auth/change-password',
+    '/api/auth/password-reset/verify',
     {
       method: 'POST',
-      body: JSON.stringify(normalizedPayload),
+      body: JSON.stringify({
+        email: normalizedEmail,
+        resetCode: normalizedResetCode,
+        preserveData: true,
+        ...normalizedPayload,
+      }),
     }
   );
 };
@@ -137,7 +149,8 @@ export const resetPassword = (
   srpSalt: string,
   srpVerifier: string,
   encryptedDataKey: string,
-  kekSalt: string
+  kekSalt: string,
+  preserveData?: boolean,
 ): Promise<GenericAuthResult> => {
   const normalizedEmail = normalizeEmail(email);
   const normalizedResetCode = resetCode.trim();
@@ -150,6 +163,7 @@ export const resetPassword = (
     body: JSON.stringify({
       email: normalizedEmail,
       resetCode: normalizedResetCode,
+      ...(preserveData !== undefined ? { preserveData } : {}),
       ...normalizedPayload,
     }),
   });

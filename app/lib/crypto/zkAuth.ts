@@ -163,7 +163,7 @@ export async function zkResetPassword(email: string, code: string, newPassword: 
     const encryptedDataKey = await sealDataKey(plainDataKey, dekWrapKey);
 
     // 步驟 3：上傳至後端
-    await apiResetPassword(normalizedEmail, code, srpSalt, srpVerifier, encryptedDataKey, kekSalt);
+    await apiResetPassword(normalizedEmail, code, srpSalt, srpVerifier, encryptedDataKey, kekSalt, false);
 
     // 步驟 4：重設密碼後，需重新登入以建立 session
     clearCryptoSession();
@@ -181,7 +181,7 @@ export async function zkResetPassword(email: string, code: string, newPassword: 
  * 因為目前已登入，所以 cryptoSession 中有明文的 Data Key。
  * 重新推導新的 DEK Wrap Key，並將現有 Data Key 重新加密上傳，不遺失資料。
  */
-export async function zkChangePassword(email: string, newPassword: string): Promise<void> {
+export async function zkChangePassword(email: string, resetCode: string, newPassword: string): Promise<void> {
   if (!cryptoSession) {
     throw new Error('No active crypto session. Please log in again.');
   }
@@ -199,7 +199,8 @@ export async function zkChangePassword(email: string, newPassword: string): Prom
     const encryptedDataKey = await sealDataKey(assertDataKeyHex32(cryptoSession.dataKeyHex), dekWrapKey);
 
     // 步驟 3：上傳至後端
-    await apiChangePassword(srpSalt, srpVerifier, encryptedDataKey, kekSalt);
+    // preserveData=true 是語意宣告；真正能否保留資料取決於此處是否提供了新 KEK re-wrap 後的 encryptedDataKey。
+    await apiChangePassword(normalizedEmail, resetCode, srpSalt, srpVerifier, encryptedDataKey, kekSalt);
 
     // 步驟 4：更新記憶體中的 session DEK Wrap Key
     cryptoSession.dekWrapKey = dekWrapKey;
