@@ -107,7 +107,7 @@ export default function SecurityPage() {
           <CardHeader>
             <CardTitle>Password</CardTitle>
             <CardDescription>
-              Your account’s first line of defence. Make sure it’s unique, impossible to guess, and stored safely.
+            Your account’s first line of defence. Make sure it’s unique, impossible to guess, and stored safely.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
