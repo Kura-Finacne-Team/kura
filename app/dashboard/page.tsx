@@ -200,6 +200,10 @@ export default function DashboardPage() {
                 };
                 const accountTypeLabel = typeLabel[account.type] ?? account.type;
                 const accountDisplayName = account.mask ? `${accountTypeLabel} ••••${account.mask}` : accountTypeLabel;
+                const normalizedBalance = Math.abs(Number(account.balance) || 0);
+                const displayBalance = account.type === 'credit'
+                  ? `-$${normalizedBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                  : `$${normalizedBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
                 return (
                   <div key={account.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-0 gap-3">
@@ -223,7 +227,7 @@ export default function DashboardPage() {
                       <p className="font-medium text-sm truncate">{accountDisplayName}</p>
                     </div>
                     <p className={`font-mono font-medium text-sm ${account.type === 'credit' ? 'text-red-400' : 'text-green-400'}`}>
-                      ${account.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {displayBalance}
                     </p>
                   </div>
                 );
