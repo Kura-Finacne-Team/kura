@@ -77,8 +77,16 @@ export default function TransactionsPage() {
     return 'text-[var(--kura-text-secondary)]';
   };
 
-  const accountNameById = useMemo(() => {
-    return new Map(accounts.map((account) => [account.id, account.name]));
+  const accountMetaById = useMemo(() => {
+    return new Map(
+      accounts.map((account) => [
+        account.id,
+        {
+          type: account.type,
+          mask: account.mask,
+        },
+      ]),
+    );
   }, [accounts]);
 
   return (
@@ -143,8 +151,10 @@ export default function TransactionsPage() {
           filteredTransactions.map((transaction) => {
             const amount = parseAmount(transaction.amount);
             const isCredit = transaction.type === 'credit';
-            const resolvedAccountName = accountNameById.get(transaction.accountId) ?? transaction.accountName;
-            const sourceAccount = `${transaction.accountType} • ${resolvedAccountName}`;
+            const accountMeta = accountMetaById.get(transaction.accountId);
+            const displayType = accountMeta?.type ?? transaction.accountType;
+            const displayMask = accountMeta?.mask ? `••••${accountMeta.mask}` : '••••';
+            const sourceAccount = `${displayType} ${displayMask}`;
             const merchantLogo = (transaction as { merchantLogo?: string }).merchantLogo;
 
             return (
@@ -164,7 +174,7 @@ export default function TransactionsPage() {
                         className="w-full h-full rounded-full object-cover"
                       />
                     ) : (
-                      <span className="text-xs font-semibold text-[var(--kura-text)]">
+                      <span className="text-xs font-semibold text-[#111827]">
                         {transaction.merchant.charAt(0).toUpperCase()}
                       </span>
                     )}
