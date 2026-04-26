@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { useAppStore } from '@/store/useAppStore';
 import PlansModal from './_components/PlansModal';
 
@@ -37,7 +36,7 @@ export default function PlanBillingPage() {
           ← Back
         </Button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_0.65fr] gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_0.65fr] gap-8 lg:gap-10">
           <section>
             <h1 className="text-3xl font-semibold tracking-tight text-[var(--kura-text)]">Plan & Billing</h1>
 
@@ -106,19 +105,17 @@ export default function PlanBillingPage() {
             </div>
           </section>
 
-          <aside>
-            <Card className="border-[var(--kura-border)] bg-[var(--kura-surface)]">
-              <CardContent className="p-5">
-                <div className="h-32 rounded-xl bg-gradient-to-br from-[var(--kura-bg-light)] to-[var(--kura-border-light)] border border-[var(--kura-border)]" />
-                <h3 className="mt-4 text-xl font-medium text-[var(--kura-text)]">Explore plans</h3>
-                <p className="mt-2 text-sm text-[var(--kura-text-secondary)]">
-                  Get more usage and features that help you operate at scale.
-                </p>
-                <Button className="w-full mt-5" onClick={() => setIsPlansModalOpen(true)}>
-                  View all plans
-                </Button>
-              </CardContent>
-            </Card>
+          <aside className="lg:border-l lg:border-[var(--kura-border)] lg:pl-10">
+            <div className="py-1">
+              <div className="h-32 rounded-xl bg-gradient-to-br from-[var(--kura-bg-light)] to-[var(--kura-border-light)] border border-[var(--kura-border)]" />
+              <h3 className="mt-4 text-2xl font-medium text-[var(--kura-text)]">Explore plans</h3>
+              <p className="mt-2 text-sm text-[var(--kura-text-secondary)]">
+                Get more usage and features that help you operate at scale.
+              </p>
+              <Button className="w-full mt-5" onClick={() => setIsPlansModalOpen(true)}>
+                View all plans
+              </Button>
+            </div>
           </aside>
         </div>
       </div>
