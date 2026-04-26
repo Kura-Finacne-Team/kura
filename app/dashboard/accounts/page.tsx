@@ -21,32 +21,102 @@ function getAccountDisplayName(name: string, mask?: string): string {
 
 export default function AccountsPage() {
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<'bank' | 'investment' | 'wallet'>('bank');
   const accounts = useFinanceStore((state) => state.accounts);
+  const investmentAccounts = useFinanceStore((state) => state.investmentAccounts);
+  const investments = useFinanceStore((state) => state.investments);
   const isLoadingPlaidData = useFinanceStore((state) => state.isLoadingPlaidData);
   const isBalanceHidden = useAppStore((state) => state.isBalanceHidden);
 
   const availableBalance = useMemo(() => {
-    return accounts.reduce((sum, account) => {
-      const rawBalance = Number(account.balance) || 0;
-      if (account.type === 'credit') {
-        return sum - Math.abs(rawBalance);
-      }
-      return sum + rawBalance;
-    }, 0);
-  }, [accounts]);
+    const getInvestmentValue = (accountId: string): number => {
+      return investments
+        .filter((investment) => investment.accountId === accountId)
+        .reduce((sum, investment) => sum + investment.holdings * investment.currentPrice, 0);
+    };
+
+    if (activeSection === 'bank') {
+      return accounts.reduce((sum, account) => {
+        const rawBalance = Number(account.balance) || 0;
+        if (account.type === 'credit') {
+          return sum - Math.abs(rawBalance);
+        }
+        return sum + rawBalance;
+      }, 0);
+    }
+
+    if (activeSection === 'investment') {
+      return investmentAccounts
+        .filter((account) => account.type === 'Broker' || account.type === 'Exchange')
+        .reduce((sum, account) => sum + getInvestmentValue(account.id), 0);
+    }
+
+    return investmentAccounts
+      .filter((account) => account.type === 'Web3 Wallet')
+      .reduce((sum, account) => sum + getInvestmentValue(account.id), 0);
+  }, [activeSection, accounts, investmentAccounts, investments]);
 
   const rows = useMemo(() => {
-    return accounts.map((account) => {
-      const balanceText = account.type === 'credit' ? `-${formatCurrency(account.balance)}` : formatCurrency(account.balance);
-      const maskedBalance = isBalanceHidden ? '••••••' : balanceText;
+    const getInvestmentValue = (accountId: string): number => {
+      return investments
+        .filter((investment) => investment.accountId === accountId)
+        .reduce((sum, investment) => sum + investment.holdings * investment.currentPrice, 0);
+    };
 
-      return {
-        ...account,
-        displayName: getAccountDisplayName(account.name, account.mask),
-        maskedBalance,
-      };
-    });
-  }, [accounts, isBalanceHidden]);
+    if (activeSection === 'bank') {
+      return accounts.map((account) => {
+        const balanceText = account.type === 'credit' ? `-${formatCurrency(account.balance)}` : formatCurrency(account.balance);
+        const maskedBalance = isBalanceHidden ? '••••••' : balanceText;
+
+        return {
+          id: account.id,
+          logo: account.logo,
+          displayName: getAccountDisplayName(account.name, account.mask),
+          typeLabel: account.type,
+          maskedBalance,
+          balanceTone: account.type === 'credit' ? 'credit' as const : 'positive' as const,
+        };
+      });
+    }
+
+    if (activeSection === 'investment') {
+      const investmentRows = investmentAccounts
+        .filter((account) => account.type === 'Broker' || account.type === 'Exchange')
+        .map((account) => {
+          const totalValue = getInvestmentValue(account.id);
+          return {
+            id: account.id,
+            logo: account.logo,
+            displayName: account.name,
+            typeLabel: account.type,
+            maskedBalance: isBalanceHidden ? '••••••' : formatCurrency(totalValue),
+            balanceTone: 'positive' as const,
+          };
+        });
+
+      return investmentRows;
+    }
+
+    return investmentAccounts
+      .filter((account) => account.type === 'Web3 Wallet')
+      .map((account) => {
+        const totalValue = getInvestmentValue(account.id);
+        return {
+          id: account.id,
+          logo: account.logo,
+          displayName: account.name,
+          typeLabel: account.type,
+          maskedBalance: isBalanceHidden ? '••••••' : formatCurrency(totalValue),
+          balanceTone: 'positive' as const,
+        };
+      });
+  }, [activeSection, accounts, investmentAccounts, investments, isBalanceHidden]);
+
+  const emptyStateText = useMemo(() => {
+    if (activeSection === 'bank') return 'No bank accounts connected yet.';
+    if (activeSection === 'investment') return 'No investment accounts connected yet.';
+    return 'No wallet addresses connected yet.';
+  }, [activeSection]);
 
   return (
     <div className="w-full pb-24 px-6 sm:px-10 lg:px-16 pt-8 max-w-6xl mx-auto">
@@ -58,13 +128,37 @@ export default function AccountsPage() {
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Accounts</h1>
           <div className="mt-3 flex items-center gap-5 text-sm text-[var(--kura-text-secondary)]">
-            <button type="button" className="pb-2 border-b border-[var(--kura-primary)] text-[var(--kura-text)]">
+            <button
+              type="button"
+              onClick={() => setActiveSection('bank')}
+              className={`pb-2 border-b transition-colors ${
+                activeSection === 'bank'
+                  ? 'border-[var(--kura-primary)] text-[var(--kura-text)]'
+                  : 'border-transparent hover:text-[var(--kura-text)]'
+              }`}
+            >
               Bank accounts
             </button>
-            <button type="button" className="pb-2 border-b border-transparent hover:text-[var(--kura-text)] transition-colors">
+            <button
+              type="button"
+              onClick={() => setActiveSection('investment')}
+              className={`pb-2 border-b transition-colors ${
+                activeSection === 'investment'
+                  ? 'border-[var(--kura-primary)] text-[var(--kura-text)]'
+                  : 'border-transparent hover:text-[var(--kura-text)]'
+              }`}
+            >
               Investment accounts
             </button>
-            <button type="button" className="pb-2 border-b border-transparent hover:text-[var(--kura-text)] transition-colors">
+            <button
+              type="button"
+              onClick={() => setActiveSection('wallet')}
+              className={`pb-2 border-b transition-colors ${
+                activeSection === 'wallet'
+                  ? 'border-[var(--kura-primary)] text-[var(--kura-text)]'
+                  : 'border-transparent hover:text-[var(--kura-text)]'
+              }`}
+            >
               Wallet address
             </button>
           </div>
@@ -92,7 +186,7 @@ export default function AccountsPage() {
           <div className="px-4 py-6 text-sm text-[var(--kura-text-secondary)]">Loading accounts...</div>
         ) : rows.length === 0 ? (
           <div className="px-4 py-8 text-sm text-[var(--kura-text-secondary)] flex items-center justify-between gap-3">
-            <span>No accounts connected yet.</span>
+            <span>{emptyStateText}</span>
             <Button size="sm" onClick={() => setIsConnectModalOpen(true)}>
               Connect account
             </Button>
@@ -110,11 +204,11 @@ export default function AccountsPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{row.displayName}</p>
-                  <p className="text-xs text-[var(--kura-text-secondary)] capitalize">{row.type}</p>
+                  <p className="text-xs text-[var(--kura-text-secondary)]">{row.typeLabel}</p>
                 </div>
               </div>
 
-              <p className={`text-sm font-mono ${row.type === 'credit' ? 'text-red-400' : 'text-emerald-400'}`}>
+              <p className={`text-sm font-mono ${row.balanceTone === 'credit' ? 'text-red-400' : 'text-emerald-400'}`}>
                 {row.maskedBalance}
               </p>
             </div>
