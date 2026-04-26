@@ -255,14 +255,14 @@ export default function DashboardPage() {
 
                 return (
                   <div key={account.id} className="flex justify-between items-center py-2 border-b border-[var(--kura-border-light)] last:border-0 gap-3">
-                    <div className="w-8 h-8 flex-shrink-0 rounded-full bg-white border border-[var(--kura-border)] flex items-center justify-center overflow-hidden">
+                    <div className="w-8 h-8 flex-shrink-0 rounded-full bg-white flex items-center justify-center overflow-hidden">
                       {account.logo ? (
                         <Image
                           src={account.logo}
                           alt={accountDisplayName}
                           width={32}
                           height={32}
-                          className="w-full h-full p-1 object-contain"
+                          className="w-full h-full rounded-full object-cover"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}

@@ -101,7 +101,7 @@ export default function AccountsPage() {
           rows.map((row) => (
             <div key={row.id} className="grid grid-cols-[1.7fr_0.7fr] gap-4 px-4 py-3 items-center border-b border-[var(--kura-border-light)] last:border-b-0">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-full bg-white border border-[var(--kura-border)] overflow-hidden flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-white overflow-hidden flex items-center justify-center">
                   {row.logo ? (
                     <Image src={row.logo} alt={row.displayName} width={32} height={32} className="w-full h-full rounded-full object-cover" />
                   ) : (
