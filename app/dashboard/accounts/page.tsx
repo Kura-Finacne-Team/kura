@@ -16,7 +16,7 @@ function formatCurrency(value: number): string {
 }
 
 function getAccountDisplayName(name: string, mask?: string): string {
-  return mask ? `${name} • •${mask}` : name;
+  return mask ? `${name} ••${mask}` : name;
 }
 
 export default function AccountsPage() {
@@ -156,8 +156,9 @@ export default function AccountsPage() {
     const trimmed = nextNickname.trim();
     setNicknameByAccountId((prev) => {
       if (!trimmed) {
-        const { [accountId]: _removed, ...rest } = prev;
-        return rest;
+        const next = { ...prev };
+        delete next[accountId];
+        return next;
       }
       return { ...prev, [accountId]: trimmed };
     });
@@ -268,7 +269,7 @@ export default function AccountsPage() {
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{row.displayName}</p>
                   <p className="text-xs text-[var(--kura-text-secondary)] truncate">
-                    {row.typeLabel} • {row.institutionLabel}
+                    {row.typeLabel} – {row.institutionLabel}
                   </p>
                 </div>
               </div>
