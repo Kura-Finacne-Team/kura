@@ -132,16 +132,16 @@ export default function UserSettingsDrawer({ isOpen, onClose, anchorRef }: UserS
               <CardContent className="space-y-4">
                 <Separator />
                 <div className="flex flex-col gap-2">
-                  <Button variant="ghost" className="justify-start" onClick={() => handleMenuClick(() => router.push('/dashboard/profile'))}>
+                  <Button variant="ghost" className="justify-start" onClick={() => handleMenuClick(() => router.push('/settings/profile'))}>
                     Profile
                   </Button>
                   <Button variant="ghost" className="justify-start" onClick={() => handleMenuClick(() => router.push('/dashboard'))}>
                     Notifications
                   </Button>
-                  <Button variant="ghost" className="justify-start" onClick={() => handleMenuClick(() => router.push('/dashboard/security'))}>
+                  <Button variant="ghost" className="justify-start" onClick={() => handleMenuClick(() => router.push('/settings/security'))}>
                     Security
                   </Button>
-                  <Button variant="ghost" className="justify-start" onClick={() => handleMenuClick(() => router.push('/dashboard/plan-billing'))}>
+                  <Button variant="ghost" className="justify-start" onClick={() => handleMenuClick(() => router.push('/settings/plan-billing'))}>
                     Plan & Billing
                   </Button>
                   <Button variant="ghost" className="justify-start" asChild>
