@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { Area, AreaChart, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Area, AreaChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -103,6 +103,15 @@ export default function DashboardPage() {
 
   const changePercent = assetHistorySummary?.changePercent ?? null;
   const changePositive = changePercent !== null && changePercent >= 0;
+  const chartAreaData = useMemo(
+    () =>
+      chartData.map((point) => ({
+        ...point,
+        positiveValue: point.value >= 0 ? point.value : null,
+        negativeValue: point.value < 0 ? point.value : null,
+      })),
+    [chartData],
+  );
   const placeholderWaveData = useMemo(
     () => [
       { t: '1', value: 12 },
@@ -183,11 +192,15 @@ export default function DashboardPage() {
               <div className="w-full h-full rounded-xl bg-[var(--kura-border-light)] animate-pulse" />
             ) : chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <AreaChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                <AreaChart data={chartAreaData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                   <defs>
-                    <linearGradient id="totalAssetsAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="totalAssetsAreaGradientPositive" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="var(--kura-primary)" stopOpacity={0.35} />
                       <stop offset="100%" stopColor="var(--kura-primary)" stopOpacity={0.02} />
+                    </linearGradient>
+                    <linearGradient id="totalAssetsAreaGradientNegative" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--kura-primary)" stopOpacity={0.24} />
+                      <stop offset="100%" stopColor="var(--kura-primary)" stopOpacity={0.05} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="label" stroke="var(--kura-text-secondary)" tick={{ fontSize: 12 }} />
@@ -215,11 +228,30 @@ export default function DashboardPage() {
                     labelStyle={{ color: 'var(--kura-text-secondary)', fontSize: '11px' }}
                   />
                   <Area
+                    type="linear"
+                    dataKey="positiveValue"
+                    baseValue={0}
+                    stroke="none"
+                    fill="url(#totalAssetsAreaGradientPositive)"
+                    connectNulls={false}
+                    dot={false}
+                    activeDot={false}
+                  />
+                  <Area
+                    type="linear"
+                    dataKey="negativeValue"
+                    baseValue={0}
+                    stroke="none"
+                    fill="url(#totalAssetsAreaGradientNegative)"
+                    connectNulls={false}
+                    dot={false}
+                    activeDot={false}
+                  />
+                  <Line
                     type="monotone"
                     dataKey="value"
                     stroke="var(--kura-primary)"
                     strokeWidth={2}
-                    fill="url(#totalAssetsAreaGradient)"
                     dot={false}
                     activeDot={{ r: 4, fill: 'var(--kura-primary)', strokeWidth: 0 }}
                   />
