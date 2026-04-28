@@ -2,23 +2,22 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-
-interface PlansModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { createStripeCheckoutSession, StripeBillingCycle, StripePlanId } from '@/lib/stripeApi';
 
 interface PlanCard {
+  id: StripePlanId;
   name: string;
   monthlyPriceLabel: string;
   annualPriceLabel?: string;
   summary: string;
   items: string[];
   ctaLabel: string;
+  requiresCheckout: boolean;
 }
 
 const PLAN_CARDS: PlanCard[] = [
   {
+    id: 'basic',
     name: 'Kura Basic',
     monthlyPriceLabel: 'Free',
     summary: 'Your private finance command center, free forever',
@@ -28,8 +27,10 @@ const PLAN_CARDS: PlanCard[] = [
       'Privacy Dashboard: 30-day private analytics with no ad tracking.',
     ],
     ctaLabel: 'Get Started Free',
+    requiresCheckout: false,
   },
   {
+    id: 'pro',
     name: 'Kura Pro',
     monthlyPriceLabel: '$12.99 / mo',
     annualPriceLabel: '$129.99 billed annually (~$10.83/mo)',
@@ -42,8 +43,10 @@ const PLAN_CARDS: PlanCard[] = [
       'Priority Sync: 5 manual syncs/day + scheduled sync every 6 hours.',
     ],
     ctaLabel: 'Start Pro Trial',
+    requiresCheckout: true,
   },
   {
+    id: 'ultimate',
     name: 'Kura Ultimate',
     monthlyPriceLabel: '$29.99 / mo',
     annualPriceLabel: '$299.99 billed annually (~$24.99/mo)',
@@ -56,11 +59,31 @@ const PLAN_CARDS: PlanCard[] = [
       'High-Frequency Sync: 20 manual syncs/day + hourly background sync.',
     ],
     ctaLabel: 'Go Ultimate',
+    requiresCheckout: true,
   },
 ];
 
-export default function PlansModal({ isOpen, onClose }: PlansModalProps) {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annually'>('monthly');
+interface PlansModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentPlanTier: StripePlanId;
+}
+
+const STRIPE_PRICE_ID_MAP: Record<Exclude<StripePlanId, 'basic'>, Record<StripeBillingCycle, string | undefined>> = {
+  pro: {
+    monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY,
+    annually: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY,
+  },
+  ultimate: {
+    monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ULTIMATE_MONTHLY,
+    annually: process.env.NEXT_PUBLIC_STRIPE_PRICE_ULTIMATE_YEARLY,
+  },
+};
+
+export default function PlansModal({ isOpen, onClose, currentPlanTier }: PlansModalProps) {
+  const [billingCycle, setBillingCycle] = useState<StripeBillingCycle>('monthly');
+  const [submittingPlanId, setSubmittingPlanId] = useState<StripePlanId | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -79,6 +102,48 @@ export default function PlansModal({ isOpen, onClose }: PlansModalProps) {
       return { ...plan, displayPriceLabel };
     });
   }, [billingCycle]);
+
+  const currentTier = currentPlanTier;
+
+  const resolvePriceId = (plan: PlanCard): string => {
+    if (plan.id === 'basic') {
+      throw new Error('Basic plan does not require checkout.');
+    }
+
+    const priceId = STRIPE_PRICE_ID_MAP[plan.id][billingCycle];
+    if (!priceId) {
+      throw new Error(`Missing Stripe price ID for ${plan.id} (${billingCycle}).`);
+    }
+    return priceId;
+  };
+
+  const handlePlanAction = async (plan: PlanCard) => {
+    if (!plan.requiresCheckout) {
+      onClose();
+      return;
+    }
+
+    if (plan.id === currentTier) return;
+
+    try {
+      setErrorMessage('');
+      setSubmittingPlanId(plan.id);
+
+      const pageUrl = window.location.href;
+      const checkoutUrl = await createStripeCheckoutSession({
+        priceId: resolvePriceId(plan),
+        successUrl: pageUrl,
+        cancelUrl: pageUrl,
+      });
+
+      window.location.assign(checkoutUrl);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to start checkout session.';
+      setErrorMessage(message);
+    } finally {
+      setSubmittingPlanId(null);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -132,7 +197,17 @@ export default function PlansModal({ isOpen, onClose }: PlansModalProps) {
               <p className="mt-1 text-2xl font-bold text-[var(--kura-text)]">{plan.displayPriceLabel}</p>
               <p className="mt-2 text-sm text-[var(--kura-text-secondary)]">{plan.summary}</p>
 
-              <Button className="w-full mt-4">{plan.ctaLabel}</Button>
+              <Button
+                className="w-full mt-4"
+                onClick={() => void handlePlanAction(plan)}
+                disabled={submittingPlanId !== null || plan.id === currentTier}
+              >
+                {plan.id === currentTier
+                  ? 'Current Plan'
+                  : submittingPlanId === plan.id
+                    ? 'Redirecting...'
+                    : plan.ctaLabel}
+              </Button>
 
               <ul className="mt-4 space-y-2">
                 {plan.items.map((item) => (
@@ -145,6 +220,11 @@ export default function PlansModal({ isOpen, onClose }: PlansModalProps) {
             </section>
           ))}
         </div>
+        {errorMessage && (
+          <div className="border-t border-[var(--kura-border)] px-5 py-3 text-sm text-[var(--kura-error)]">
+            {errorMessage}
+          </div>
+        )}
       </div>
     </div>
   );

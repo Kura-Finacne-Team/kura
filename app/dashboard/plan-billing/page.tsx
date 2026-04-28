@@ -5,12 +5,68 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store/useAppStore';
 import PlansModal from './_components/PlansModal';
+import {
+  createStripeBillingPortalSession,
+  fetchStripeBillingStatus,
+  StripeBillingStatus,
+  StripePlanId,
+} from '@/lib/stripeApi';
 
 export default function PlanBillingPage() {
   const router = useRouter();
   const membershipLabel = useAppStore((state) => state.userProfile.membershipLabel);
   const currentPlan = membershipLabel || 'Basic';
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
+  const [isBillingPortalLoading, setIsBillingPortalLoading] = useState(false);
+  const [billingError, setBillingError] = useState('');
+  const [billingStatus, setBillingStatus] = useState<StripeBillingStatus | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        setBillingError('');
+        const status = await fetchStripeBillingStatus();
+        if (!cancelled) {
+          setBillingStatus(status);
+        }
+      } catch (error) {
+        if (cancelled) return;
+        const message = error instanceof Error ? error.message : 'Failed to load billing status.';
+        setBillingError(message);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const currentPlanTier = React.useMemo<StripePlanId>(() => {
+    const normalized = currentPlan.toLowerCase();
+    if (normalized.includes('ultimate')) return 'ultimate';
+    if (normalized.includes('pro')) return 'pro';
+    return 'basic';
+  }, [currentPlan]);
+
+  const hasPaidPlan = currentPlanTier !== 'basic' || billingStatus?.isActive === true;
+
+  const handleOpenBillingPortal = async () => {
+    try {
+      setBillingError('');
+      setIsBillingPortalLoading(true);
+      const portalUrl = await createStripeBillingPortalSession({
+        returnUrl: window.location.href,
+      });
+      window.location.assign(portalUrl);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to open billing portal.';
+      setBillingError(message);
+    } finally {
+      setIsBillingPortalLoading(false);
+    }
+  };
 
   const planFeatures = [
     'Zero-Access Core: encrypted account visibility without server-side raw data exposure.',
@@ -115,11 +171,26 @@ export default function PlanBillingPage() {
               <Button className="w-full mt-5" onClick={() => setIsPlansModalOpen(true)}>
                 View all plans
               </Button>
+              {hasPaidPlan && (
+                <Button
+                  variant="secondary"
+                  className="w-full mt-2"
+                  onClick={() => void handleOpenBillingPortal()}
+                  disabled={isBillingPortalLoading}
+                >
+                  {isBillingPortalLoading ? 'Opening billing portal...' : 'Manage billing'}
+                </Button>
+              )}
+              {billingError && <p className="mt-2 text-xs text-[var(--kura-error)]">{billingError}</p>}
             </div>
           </aside>
         </div>
       </div>
-      <PlansModal isOpen={isPlansModalOpen} onClose={() => setIsPlansModalOpen(false)} />
+      <PlansModal
+        isOpen={isPlansModalOpen}
+        onClose={() => setIsPlansModalOpen(false)}
+        currentPlanTier={currentPlanTier}
+      />
     </div>
   );
 }
