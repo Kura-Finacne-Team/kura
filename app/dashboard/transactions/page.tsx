@@ -10,6 +10,8 @@ import { useAppStore } from '@/store/useAppStore';
 type DatePreset = 'all' | 'thisMonth' | 'last30' | 'custom';
 type AmountDirection = 'any' | 'in' | 'out';
 
+const passthroughImageLoader = ({ src }: { src: string }) => src;
+
 export default function TransactionsPage() {
   const transactions = useFinanceStore((state) => state.transactions);
   const accounts = useFinanceStore((state) => state.accounts);
@@ -339,20 +341,25 @@ export default function TransactionsPage() {
               >
                 <div className="text-[var(--kura-text-secondary)]">{formatDate(transaction.date)}</div>
                 <div className="min-w-0 flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-white overflow-hidden flex items-center justify-center flex-shrink-0">
+                  <div className="relative w-8 h-8 rounded-full bg-white overflow-hidden flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-semibold text-[#111827]">
+                      {transaction.merchant.charAt(0).toUpperCase()}
+                    </span>
                     {merchantLogo ? (
                       <Image
                         src={merchantLogo}
+                        loader={passthroughImageLoader}
+                        unoptimized
                         alt={transaction.merchant}
-                        width={32}
-                        height={32}
-                        className="w-full h-full rounded-full object-cover"
+                        fill
+                        sizes="32px"
+                        className="absolute inset-0 rounded-full object-cover"
+                        referrerPolicy="no-referrer"
+                        onError={(event) => {
+                          event.currentTarget.style.display = 'none';
+                        }}
                       />
-                    ) : (
-                      <span className="text-xs font-semibold text-[#111827]">
-                        {transaction.merchant.charAt(0).toUpperCase()}
-                      </span>
-                    )}
+                    ) : null}
                   </div>
                   <div className="truncate">{transaction.merchant}</div>
                 </div>

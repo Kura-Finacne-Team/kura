@@ -48,7 +48,7 @@ export interface Investment {
   holdings: number;
   currentPrice: number;
   change24h: number;
-  type: 'crypto' | 'stock';
+  type: 'crypto' | 'stock' | 'etf';
   logo: string;
 }
 
@@ -426,7 +426,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       ...asset,
       id: asset.id || `wallet-asset-${chainId}-${normalizedAddress}-${index}`,
       accountId,
-      type: asset.type === 'stock' ? 'stock' : 'crypto',
+      type: asset.type === 'stock' ? 'stock' : asset.type === 'etf' ? 'etf' : 'crypto',
     }));
 
     set((state) => ({
