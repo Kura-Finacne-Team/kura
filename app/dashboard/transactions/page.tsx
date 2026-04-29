@@ -12,6 +12,11 @@ type AmountDirection = 'any' | 'in' | 'out';
 
 const passthroughImageLoader = ({ src }: { src: string }) => src;
 
+function normalizeMerchantName(raw: string): string {
+  const normalized = raw.split(';')[0]?.trim();
+  return normalized || raw.trim() || 'Unknown Merchant';
+}
+
 function getDateRangeByPreset(preset: Exclude<DatePreset, 'custom'>): { from: string; to: string } {
   if (preset === 'all') {
     return { from: '', to: '' };
@@ -99,10 +104,11 @@ export default function TransactionsPage() {
       const txDate = new Date(transaction.date).getTime();
       const isOut = transaction.type === 'credit';
       const isIn = !isOut;
+      const displayMerchant = normalizeMerchantName(transaction.merchant);
 
       if (normalizedKeyword) {
         const matchesKeyword =
-          transaction.merchant.toLowerCase().includes(normalizedKeyword) ||
+          displayMerchant.toLowerCase().includes(normalizedKeyword) ||
           transaction.category.toLowerCase().includes(normalizedKeyword) ||
           transaction.accountName.toLowerCase().includes(normalizedKeyword);
         if (!matchesKeyword) return false;
@@ -332,6 +338,7 @@ export default function TransactionsPage() {
             const displayMask = accountMeta?.mask ? `••••${accountMeta.mask}` : '••••';
             const sourceAccount = `${displayType} ${displayMask}`;
             const merchantLogo = (transaction as { merchantLogo?: string }).merchantLogo;
+            const displayMerchant = normalizeMerchantName(transaction.merchant);
             const normalizedMerchantLogo = typeof merchantLogo === 'string' ? merchantLogo.trim() : '';
             const hasValidMerchantLogo =
               normalizedMerchantLogo.length > 0 &&
@@ -346,26 +353,32 @@ export default function TransactionsPage() {
                 <div className="text-[var(--kura-text-secondary)]">{formatDate(transaction.date)}</div>
                 <div className="min-w-0 flex items-center gap-2">
                   <div className="relative w-8 h-8 rounded-full bg-white overflow-hidden flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-semibold text-[#111827]">
-                      {transaction.merchant.charAt(0).toUpperCase()}
+                    <span
+                      className={`text-xs font-semibold text-[#111827] ${hasValidMerchantLogo ? 'hidden' : ''}`}
+                    >
+                      {displayMerchant.charAt(0).toUpperCase()}
                     </span>
                     {hasValidMerchantLogo ? (
                       <Image
                         src={normalizedMerchantLogo}
                         loader={passthroughImageLoader}
                         unoptimized
-                        alt={transaction.merchant}
+                        alt={displayMerchant}
                         fill
                         sizes="32px"
-                        className="absolute inset-0 rounded-full object-cover"
+                        className="absolute inset-0 rounded-full object-cover bg-white"
                         referrerPolicy="no-referrer"
                         onError={(event) => {
+                          const fallbackInitial = event.currentTarget.previousElementSibling;
+                          if (fallbackInitial instanceof HTMLElement) {
+                            fallbackInitial.classList.remove('hidden');
+                          }
                           event.currentTarget.style.display = 'none';
                         }}
                       />
                     ) : null}
                   </div>
-                  <div className="truncate">{transaction.merchant}</div>
+                  <div className="truncate">{displayMerchant}</div>
                 </div>
                 <div className={`font-mono ${isCredit ? 'text-[var(--kura-error)]' : 'text-[var(--kura-success)]'}`}>
                   {isCredit ? '-' : '+'}

@@ -15,6 +15,11 @@ const ConnectAccountModal = dynamic(() => import('@/components/ConnectAccountMod
   ssr: false,
 });
 
+function normalizeMerchantName(raw: string): string {
+  const normalized = raw.split(';')[0]?.trim();
+  return normalized || raw.trim() || 'Unknown Merchant';
+}
+
 export default function DashboardPage() {
   const isBalanceHidden = useAppStore((state) => state.isBalanceHidden);
   const accounts = useFinanceStore((state) => state.accounts);
@@ -363,7 +368,7 @@ export default function DashboardPage() {
               {recentTransactions.map((transaction, index) => (
                 <div key={transaction.id} className={`flex justify-between items-center py-3 ${index !== recentTransactions.length - 1 ? 'border-b border-[var(--kura-border-light)]' : ''}`}>
                   <div className="flex-1">
-                    <p className="font-medium text-sm">{transaction.merchant}</p>
+                    <p className="font-medium text-sm">{normalizeMerchantName(transaction.merchant)}</p>
                     <div className="flex gap-3 mt-1">
                       <p className="text-gray-500 text-xs">{transaction.category}</p>
                       <p className="text-gray-500 text-xs">{new Date(transaction.date).toLocaleDateString('en-US')}</p>
