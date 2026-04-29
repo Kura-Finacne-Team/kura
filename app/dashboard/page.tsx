@@ -122,17 +122,20 @@ export default function DashboardPage() {
   }, [apiAssetHistory]);
 
   const miniChartDataBySegment = useMemo(() => {
+    const formatMiniLabel = (timestamp: string): string =>
+      new Date(timestamp).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
+
     return {
       plaidInvestment: sortedAssetHistory.map((point) => ({
-        label: point.timestamp,
+        label: formatMiniLabel(point.timestamp),
         value: point.plaidInvestment ?? 0,
       })),
       cryptoSpot: sortedAssetHistory.map((point) => ({
-        label: point.timestamp,
+        label: formatMiniLabel(point.timestamp),
         value: point.cryptoSpot ?? 0,
       })),
       defiProtocol: sortedAssetHistory.map((point) => ({
-        label: point.timestamp,
+        label: formatMiniLabel(point.timestamp),
         value: point.defiProtocol ?? 0,
       })),
     };
@@ -363,7 +366,7 @@ export default function DashboardPage() {
               <CardDescription>{card.description}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0 flex-1 flex flex-col">
-              <div className="h-24 mb-4 rounded-lg border border-[var(--kura-border)] p-2">
+              <div className="h-24 mb-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={card.chartData}>
                     <defs>
@@ -372,8 +375,19 @@ export default function DashboardPage() {
                         <stop offset="100%" stopColor="var(--kura-primary)" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
-                    <XAxis dataKey="label" hide />
-                    <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
+                    <XAxis
+                      dataKey="label"
+                      stroke="var(--kura-text-secondary)"
+                      tick={{ fontSize: 10 }}
+                      minTickGap={12}
+                    />
+                    <YAxis
+                      stroke="var(--kura-text-secondary)"
+                      tick={{ fontSize: 10 }}
+                      width={30}
+                      tickFormatter={(value) => `${Number(value).toFixed(0)}`}
+                      domain={['dataMin - 2', 'dataMax + 2']}
+                    />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'var(--kura-bg-light)',
@@ -381,6 +395,7 @@ export default function DashboardPage() {
                         borderRadius: '8px',
                       }}
                       formatter={(value) => [isBalanceHidden ? '••••••' : `$${(value as number).toFixed(2)}`, card.title]}
+                      labelFormatter={(label) => `Date: ${label}`}
                       labelStyle={{ color: 'var(--kura-text-secondary)', fontSize: '11px' }}
                     />
                     <Area

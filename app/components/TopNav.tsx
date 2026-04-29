@@ -1,21 +1,115 @@
 // 頂部導覽列元件
 "use client";
 
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
+import { useAccount, useChainId } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import UserSettingsDrawer from './UserSettingsDrawer';
 import { useAppStore } from '@/store/useAppStore';
+import { type Investment, useFinanceStore } from '@/store/useFinanceStore';
+import { fetchDeBankProtocolPositions, fetchDeBankTokenPositions } from '@/lib/debankApi';
+
+const LAST_SYNC_TIME_STORAGE_KEY = 'kura.last-sync-time';
+const SYNC_VISIBLE_ROUTES = ['/dashboard/accounts', '/dashboard/crypto', '/dashboard/defi-protocol'] as const;
+
+const CHAIN_NAME_BY_ID: Record<number, string> = {
+  1: 'Ethereum',
+  137: 'Polygon',
+  42161: 'Arbitrum',
+};
+
+function normalizeAddress(value: string | undefined): string | null {
+  if (!value) return null;
+  return value.toLowerCase();
+}
 
 export default function TopNav() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return window.localStorage.getItem(LAST_SYNC_TIME_STORAGE_KEY);
+  });
+  const [isSyncing, setIsSyncing] = useState(false);
   const avatarButtonRef = useRef<HTMLButtonElement>(null);
+  const pathname = usePathname() || '';
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId();
   const userProfile = useAppStore(state => state.userProfile);
   const authStatus = useAppStore(state => state.authStatus);
   const isBalanceHidden = useAppStore((state) => state.isBalanceHidden);
   const toggleBalanceVisibility = useAppStore((state) => state.toggleBalanceVisibility);
+  const hydratePlaidFinanceData = useFinanceStore((state) => state.hydratePlaidFinanceData);
+  const syncConnectedWalletAssets = useFinanceStore((state) => state.syncConnectedWalletAssets);
+  const hydrateAssetHistory = useFinanceStore((state) => state.hydrateAssetHistory);
   const displayName = userProfile.displayName.trim();
   const avatarInitial = displayName ? displayName.slice(0, 1).toUpperCase() : '?';
+  const shouldShowSync = useMemo(
+    () => SYNC_VISIBLE_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)),
+    [pathname],
+  );
+
+  const handleSync = async () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    try {
+      await hydratePlaidFinanceData();
+
+      if (isConnected) {
+        const normalizedAddress = normalizeAddress(address);
+        if (normalizedAddress) {
+          const [tokens, protocols] = await Promise.all([
+            fetchDeBankTokenPositions(normalizedAddress, true),
+            fetchDeBankProtocolPositions(normalizedAddress, true),
+          ]);
+
+          const accountId = `wallet-${chainId}-${normalizedAddress}`;
+          const tokenAssets: Investment[] = tokens.map((token) => ({
+            id: `wallet-token-${chainId}-${normalizedAddress}-${token.id}`,
+            accountId,
+            symbol: token.symbol || 'TOKEN',
+            name: token.name || token.symbol || 'Token',
+            holdings: token.amount,
+            currentPrice: token.price,
+            change24h: 0,
+            type: 'crypto',
+            logo: token.logo,
+          }));
+          const protocolAssets: Investment[] = protocols
+            .filter((protocol) => protocol.usdValue > 0)
+            .map((protocol) => ({
+              id: `wallet-protocol-${chainId}-${normalizedAddress}-${protocol.id}`,
+              accountId,
+              symbol: 'LP',
+              name: protocol.name,
+              holdings: 1,
+              currentPrice: protocol.usdValue,
+              change24h: 0,
+              type: 'crypto',
+              logo: protocol.logo,
+            }));
+
+          syncConnectedWalletAssets({
+            address: normalizedAddress,
+            chainId,
+            chainName: CHAIN_NAME_BY_ID[chainId] ?? `Chain ${chainId}`,
+            assets: [...tokenAssets, ...protocolAssets],
+          });
+        }
+      }
+
+      await hydrateAssetHistory(30);
+
+      const timestamp = new Date().toISOString();
+      setLastSyncTime(timestamp);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(LAST_SYNC_TIME_STORAGE_KEY, timestamp);
+      }
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // 僅在已認證時顯示導覽列
   if (authStatus !== 'authenticated') {
@@ -24,9 +118,35 @@ export default function TopNav() {
 
   return (
     <>
-      <header className="w-full flex justify-end items-center px-6 py-2.5 bg-[var(--kura-bg)] z-40 shrink-0">
+      <header className="w-full flex justify-between items-center px-6 py-2.5 bg-[var(--kura-bg)] z-40 shrink-0">
+        <div className="text-xs text-[var(--kura-text-secondary)] min-h-4">
+          {shouldShowSync
+            ? `Last synced: ${
+                lastSyncTime
+                  ? new Date(lastSyncTime).toLocaleString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : 'Never'
+              }`
+            : ''}
+        </div>
         {/* 右側控制區 */}
         <div className="flex items-center gap-4">
+          {shouldShowSync && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => void handleSync()}
+              disabled={isSyncing}
+              className="h-8 px-3"
+            >
+              {isSyncing ? 'Syncing...' : 'Sync'}
+            </Button>
+          )}
           <Button
             type="button"
             variant="ghost"
