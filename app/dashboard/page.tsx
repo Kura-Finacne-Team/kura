@@ -115,19 +115,29 @@ export default function DashboardPage() {
 
   const changePercent = assetHistorySummary?.cashFlow?.changePercent ?? null;
   const changePositive = changePercent !== null && changePercent >= 0;
-  const placeholderWaveData = useMemo(
-    () => [
-      { t: '1', value: 12 },
-      { t: '2', value: 16 },
-      { t: '3', value: 14 },
-      { t: '4', value: 18 },
-      { t: '5', value: 11 },
-      { t: '6', value: 9 },
-      { t: '7', value: 13 },
-      { t: '8', value: 10 },
-    ],
-    [],
-  );
+  const sortedAssetHistory = useMemo(() => {
+    return [...apiAssetHistory].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
+  }, [apiAssetHistory]);
+
+  const miniChartDataBySegment = useMemo(() => {
+    return {
+      plaidInvestment: sortedAssetHistory.map((point) => ({
+        label: point.timestamp,
+        value: point.plaidInvestment ?? 0,
+      })),
+      cryptoSpot: sortedAssetHistory.map((point) => ({
+        label: point.timestamp,
+        value: point.cryptoSpot ?? 0,
+      })),
+      defiProtocol: sortedAssetHistory.map((point) => ({
+        label: point.timestamp,
+        value: point.defiProtocol ?? 0,
+      })),
+    };
+  }, [sortedAssetHistory]);
+
   const latestAssetSnapshot = useMemo(() => {
     if (apiAssetHistory.length === 0) {
       return {
@@ -163,6 +173,7 @@ export default function DashboardPage() {
         value: formatAssetAmount(latestAssetSnapshot.plaidInvestment),
         change: formatChange(assetHistorySummary?.plaidInvestment?.changePercent ?? 0),
         changeVariant: (assetHistorySummary?.plaidInvestment?.changePercent ?? 0) >= 0 ? 'success' as const : 'destructive' as const,
+        chartData: miniChartDataBySegment.plaidInvestment,
         description: 'Tracked from connected investment accounts',
         actionLabel: 'View Details',
         gradientId: 'investmentAreaGradient',
@@ -173,6 +184,7 @@ export default function DashboardPage() {
         value: formatAssetAmount(latestAssetSnapshot.cryptoSpot),
         change: formatChange(assetHistorySummary?.cryptoSpot?.changePercent ?? 0),
         changeVariant: (assetHistorySummary?.cryptoSpot?.changePercent ?? 0) >= 0 ? 'success' as const : 'destructive' as const,
+        chartData: miniChartDataBySegment.cryptoSpot,
         description: 'Spot balance from wallets and exchanges',
         actionLabel: 'Connect Wallet',
         gradientId: 'cryptoAreaGradient',
@@ -183,12 +195,13 @@ export default function DashboardPage() {
         value: formatAssetAmount(latestAssetSnapshot.defiProtocol),
         change: formatChange(assetHistorySummary?.defiProtocol?.changePercent ?? 0),
         changeVariant: (assetHistorySummary?.defiProtocol?.changePercent ?? 0) >= 0 ? 'success' as const : 'destructive' as const,
+        chartData: miniChartDataBySegment.defiProtocol,
         description: 'Protocol positions and LP allocations',
         actionLabel: 'Add Protocol',
         gradientId: 'defiAreaGradient',
       },
     ],
-    [assetHistorySummary, latestAssetSnapshot],
+    [assetHistorySummary, latestAssetSnapshot, miniChartDataBySegment],
   );
 
   const maskAmount = (amountText: string): string => {
@@ -350,16 +363,16 @@ export default function DashboardPage() {
               <CardDescription>{card.description}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0 flex-1 flex flex-col">
-              <div className="h-24 mb-4 rounded-lg bg-[var(--kura-border-light)] border border-[var(--kura-border)] p-2">
+              <div className="h-24 mb-4 rounded-lg border border-[var(--kura-border)] p-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={placeholderWaveData}>
+                  <AreaChart data={card.chartData}>
                     <defs>
                       <linearGradient id={card.gradientId} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="var(--kura-primary)" stopOpacity={0.3} />
                         <stop offset="100%" stopColor="var(--kura-primary)" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
-                    <XAxis dataKey="t" hide />
+                    <XAxis dataKey="label" hide />
                     <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
                     <Tooltip
                       contentStyle={{
