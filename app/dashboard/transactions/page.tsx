@@ -332,6 +332,11 @@ export default function TransactionsPage() {
             const displayMask = accountMeta?.mask ? `••••${accountMeta.mask}` : '••••';
             const sourceAccount = `${displayType} ${displayMask}`;
             const merchantLogo = (transaction as { merchantLogo?: string }).merchantLogo;
+            const normalizedMerchantLogo = typeof merchantLogo === 'string' ? merchantLogo.trim() : '';
+            const hasValidMerchantLogo =
+              normalizedMerchantLogo.length > 0 &&
+              normalizedMerchantLogo.toLowerCase() !== 'null' &&
+              normalizedMerchantLogo.toLowerCase() !== 'undefined';
 
             return (
               <div
@@ -344,9 +349,9 @@ export default function TransactionsPage() {
                     <span className="text-xs font-semibold text-[#111827]">
                       {transaction.merchant.charAt(0).toUpperCase()}
                     </span>
-                    {merchantLogo ? (
+                    {hasValidMerchantLogo ? (
                       <Image
-                        src={merchantLogo}
+                        src={normalizedMerchantLogo}
                         loader={passthroughImageLoader}
                         unoptimized
                         alt={transaction.merchant}
