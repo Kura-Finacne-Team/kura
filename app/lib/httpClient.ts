@@ -53,45 +53,16 @@ function isAbsoluteUrl(path: string): boolean {
   return /^https?:\/\//i.test(path);
 }
 
-const KURA_API_ORIGIN = 'https://api.kura-finance.com';
-
-function toSameOriginProxyPath(rawUrl: string): string | null {
-  try {
-    const parsed = new URL(rawUrl);
-    if (parsed.origin !== KURA_API_ORIGIN || !parsed.pathname.startsWith('/api/')) {
-      return null;
-    }
-    return `${parsed.pathname}${parsed.search}`;
-  } catch {
-    return null;
-  }
+function normalizeBaseUrl(url: string): string {
+  return url.replace(/\/+$/, '');
 }
 
 function resolveRequestUrl(path: string): string {
-  // For Kura production API domain, always route via same-origin /api proxy in browser.
-  if (typeof window !== 'undefined') {
-    if (isAbsoluteUrl(path)) {
-      const proxiedPath = toSameOriginProxyPath(path);
-      if (proxiedPath) {
-        return proxiedPath;
-      }
-      return path;
-    }
-
-    if (path.startsWith('/api/')) {
-      const baseUrl = getBackendBaseUrl();
-      const proxiedPath = toSameOriginProxyPath(`${baseUrl}${path}`);
-      if (proxiedPath) {
-        return proxiedPath;
-      }
-    }
-  }
-
   if (isAbsoluteUrl(path)) {
     return path;
   }
 
-  const baseUrl = getBackendBaseUrl();
+  const baseUrl = normalizeBaseUrl(getBackendBaseUrl());
   return `${baseUrl}${path}`;
 }
 

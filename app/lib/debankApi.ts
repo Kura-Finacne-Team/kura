@@ -34,6 +34,14 @@ export interface DeBankPositionsResponse<T> {
   lastSyncedAt: string | null;
 }
 
+function resolveDeBankPath(path: string): string {
+  if (typeof window !== 'undefined') {
+    // Force DeBank requests through same-origin /api proxy in browser.
+    return `${window.location.origin}${path}`;
+  }
+  return path;
+}
+
 function toRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null;
 }
@@ -226,7 +234,11 @@ export const fetchDeBankTokenPositions = async (
 ): Promise<DeBankPositionsResponse<DeBankTokenPosition>> => {
   const query = new URLSearchParams({ address });
   if (refresh) query.set('refresh', 'true');
-  const payload = await requestJson<unknown>(`/api/debank/tokens?${query.toString()}`, { method: 'GET' }, 'DeBankAPI');
+  const payload = await requestJson<unknown>(
+    resolveDeBankPath(`/api/debank/tokens?${query.toString()}`),
+    { method: 'GET' },
+    'DeBankAPI',
+  );
   return {
     positions: extractArrayPayload<unknown>(payload).map(normalizeToken).filter((item): item is DeBankTokenPosition => Boolean(item)),
     lastSyncedAt: extractLastSyncedAt(payload),
@@ -240,7 +252,7 @@ export const fetchDeBankProtocolPositions = async (
   const query = new URLSearchParams({ address });
   if (refresh) query.set('refresh', 'true');
   const payload = await requestJson<unknown>(
-    `/api/debank/protocols?${query.toString()}`,
+    resolveDeBankPath(`/api/debank/protocols?${query.toString()}`),
     { method: 'GET' },
     'DeBankAPI',
   );
@@ -254,7 +266,7 @@ export const fetchDeBankProtocolPositions = async (
 
 export const unlinkDeBankAddress = (address: string): Promise<{ message?: string }> => {
   return requestJson<{ message?: string }>(
-    `/api/debank/addresses/${encodeURIComponent(address)}`,
+    resolveDeBankPath(`/api/debank/addresses/${encodeURIComponent(address)}`),
     { method: 'DELETE' },
     'DeBankAPI',
   );
