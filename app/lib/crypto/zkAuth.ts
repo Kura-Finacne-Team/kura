@@ -228,8 +228,6 @@ async function buildRegistrationSrpPayload(email: string, password: string): Pro
   const kekSalt = generateSalt();
   const { dekWrapKey, authKeyHex } = await deriveKeysFromPassword(password, srpSalt, kekSalt);
   const { srpVerifier } = await computeVerifier(email, authKeyHex, srpSalt);
-  // 註冊流程未登入，不可呼叫需要授權的 /srp/generate-data-key。
-  // Data Key 必須在前端本地生成，保持零知識。
   const plainDataKey = assertDataKeyHex32(generateDataKeyHex(32));
   const encryptedDataKey = await sealDataKey(plainDataKey, dekWrapKey);
 
