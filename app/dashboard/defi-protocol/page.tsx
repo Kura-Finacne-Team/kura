@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useMemo, useState } from 'react';
-import { useAccount } from 'wagmi';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { fetchDeBankProtocolPositions, type DeBankProtocolPosition } from '@/lib/debankApi';
+import {
+  fetchDeBankProtocolPositions,
+  fetchLinkedDeBankAddresses,
+  type DeBankProtocolPosition,
+} from '@/lib/debankApi';
 import { useAppStore } from '@/store/useAppStore';
 
 function formatCurrency(value: number, mask: boolean): string {
@@ -50,22 +53,38 @@ function ProtocolAvatar({ logo, name }: { logo?: string; name: string }) {
 }
 
 export default function DefiProtocolPage() {
-  const { address } = useAccount();
   const isBalanceHidden = useAppStore((state) => state.isBalanceHidden);
   const [positions, setPositions] = useState<DeBankProtocolPosition[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedAddress, setSelectedAddress] = useState('');
-  const [addressInput, setAddressInput] = useState('');
+  const [linkedAddresses, setLinkedAddresses] = useState<string[]>([]);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [isAddressPickerOpen, setIsAddressPickerOpen] = useState(false);
 
-  const normalizedConnectedAddress = address?.toLowerCase() ?? '';
-
   React.useEffect(() => {
-    if (!normalizedConnectedAddress) return;
-    setSelectedAddress((prev) => prev || normalizedConnectedAddress);
-    setAddressInput((prev) => prev || normalizedConnectedAddress);
-  }, [normalizedConnectedAddress]);
+    let cancelled = false;
+    void (async () => {
+      setIsLoadingAddresses(true);
+      try {
+        const addresses = await fetchLinkedDeBankAddresses();
+        if (cancelled) return;
+        setLinkedAddresses(addresses);
+        setSelectedAddress((prev) => (prev && addresses.includes(prev) ? prev : addresses[0] ?? ''));
+      } catch (err) {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : 'Failed to load linked wallet addresses';
+        setError(message);
+      } finally {
+        if (!cancelled) {
+          setIsLoadingAddresses(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loadProtocolPositions = React.useCallback(async (targetAddress: string, refresh: boolean) => {
     if (!targetAddress) {
@@ -91,17 +110,11 @@ export default function DefiProtocolPage() {
     void loadProtocolPositions(selectedAddress, false);
   }, [loadProtocolPositions, selectedAddress]);
 
-  const applyAddress = React.useCallback(
-    (rawValue: string) => {
-      const normalized = rawValue.trim().toLowerCase();
-      if (!normalized) return;
-      setSelectedAddress(normalized);
-      setAddressInput(normalized);
-      setIsAddressPickerOpen(false);
-      void loadProtocolPositions(normalized, true);
-    },
-    [loadProtocolPositions],
-  );
+  const applyAddress = React.useCallback((address: string) => {
+    setSelectedAddress(address);
+    setIsAddressPickerOpen(false);
+    void loadProtocolPositions(address, true);
+  }, [loadProtocolPositions]);
 
   const { totalValue, sortedPositions } = useMemo(() => {
     const total = positions.reduce((sum, item) => sum + item.usdValue, 0);
@@ -130,7 +143,7 @@ export default function DefiProtocolPage() {
                 type="button"
                 variant="outline"
                 onClick={() => setIsAddressPickerOpen((prev) => !prev)}
-                disabled={isLoading}
+                disabled={isLoading || isLoadingAddresses || linkedAddresses.length === 0}
                 className="min-w-28 justify-start"
               >
                 {formatShortAddress(selectedAddress)}
@@ -138,31 +151,28 @@ export default function DefiProtocolPage() {
               {isAddressPickerOpen ? (
                 <div className="absolute right-0 mt-2 w-80 rounded-xl border border-[var(--kura-border)] bg-[var(--kura-surface)] shadow-lg p-3 z-20">
                   <p className="text-xs text-[var(--kura-text-secondary)] mb-2">Switch address</p>
-                  <input
-                    value={addressInput}
-                    onChange={(event) => setAddressInput(event.target.value)}
-                    placeholder="0x..."
-                    className="w-full rounded-lg border border-[var(--kura-border)] bg-[var(--kura-bg-light)] px-3 py-2 text-sm outline-none focus:border-[var(--kura-primary)]"
-                  />
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <Button type="button" variant="outline" onClick={() => setIsAddressPickerOpen(false)}>
-                      Cancel
-                    </Button>
-                    <div className="flex items-center gap-2">
-                      {normalizedConnectedAddress ? (
+                  {linkedAddresses.length === 0 ? (
+                    <p className="text-sm text-[var(--kura-text-secondary)]">No linked DeBank address found.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {linkedAddresses.map((address) => (
                         <Button
+                          key={address}
                           type="button"
-                          variant="ghost"
-                          onClick={() => applyAddress(normalizedConnectedAddress)}
-                          className="text-xs"
+                          variant={address === selectedAddress ? 'secondary' : 'outline'}
+                          onClick={() => applyAddress(address)}
+                          className="w-full justify-between"
                         >
-                          Use connected
+                          <span>{formatShortAddress(address)}</span>
+                          <span className="text-xs text-[var(--kura-text-secondary)]">{address}</span>
                         </Button>
-                      ) : null}
-                      <Button type="button" onClick={() => applyAddress(addressInput)}>
-                        Apply
-                      </Button>
+                      ))}
                     </div>
+                  )}
+                  <div className="mt-3 flex items-center justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setIsAddressPickerOpen(false)}>
+                      Close
+                    </Button>
                   </div>
                 </div>
               ) : null}
@@ -181,7 +191,9 @@ export default function DefiProtocolPage() {
             </div>
             <div className="rounded-xl border border-[var(--kura-border)] bg-[var(--kura-bg-light)] px-4 py-3">
               <p className="text-xs text-[var(--kura-text-secondary)]">Current Address</p>
-              <p className="text-sm font-medium mt-2">{selectedAddress || 'No address selected'}</p>
+              <p className="text-sm font-medium mt-2">
+                {isLoadingAddresses ? 'Loading linked addresses...' : selectedAddress || 'No linked address'}
+              </p>
             </div>
           </div>
 

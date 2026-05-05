@@ -34,6 +34,49 @@ export interface DeBankPositionsResponse<T> {
   lastSyncedAt: string | null;
 }
 
+function normalizeEvmAddress(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  return /^0x[a-f0-9]{40}$/.test(normalized) ? normalized : null;
+}
+
+function extractAddressArrayPayload(payload: unknown): string[] {
+  const directList = extractArrayPayload<unknown>(payload);
+  const normalizedDirect = directList
+    .map((item) => {
+      if (typeof item === 'string') return normalizeEvmAddress(item);
+      const record = toRecord(item);
+      if (!record) return null;
+      return normalizeEvmAddress(record.address ?? record.walletAddress ?? record.wallet_address);
+    })
+    .filter((address): address is string => Boolean(address));
+
+  if (normalizedDirect.length > 0) {
+    return Array.from(new Set(normalizedDirect));
+  }
+
+  const record = toRecord(payload);
+  if (!record) return [];
+
+  const nestedCandidates = [record.addresses, record.wallets, record.linkedAddresses, record.linked_addresses];
+  for (const candidate of nestedCandidates) {
+    if (!Array.isArray(candidate)) continue;
+    const normalized = candidate
+      .map((item) => {
+        if (typeof item === 'string') return normalizeEvmAddress(item);
+        const itemRecord = toRecord(item);
+        if (!itemRecord) return null;
+        return normalizeEvmAddress(itemRecord.address ?? itemRecord.walletAddress ?? itemRecord.wallet_address);
+      })
+      .filter((address): address is string => Boolean(address));
+    if (normalized.length > 0) {
+      return Array.from(new Set(normalized));
+    }
+  }
+
+  return [];
+}
+
 function toRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null;
 }
@@ -262,4 +305,9 @@ export const unlinkDeBankAddress = (address: string): Promise<{ message?: string
     { method: 'DELETE' },
     'DeBankAPI',
   );
+};
+
+export const fetchLinkedDeBankAddresses = async (): Promise<string[]> => {
+  const payload = await requestJson<unknown>('/api/debank/addresses', { method: 'GET' }, 'DeBankAPI');
+  return extractAddressArrayPayload(payload);
 };
